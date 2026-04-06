@@ -1,3 +1,5 @@
+import { patchMethod } from "./patcher";
+
 export interface ModData {
   id: string;
   code: string;
@@ -68,6 +70,7 @@ export const executeMod = (mod: ModData) => {
       if (gdLoaded) cb();
       else modInitCallbacks.push(cb);
     },
+    patchMethod,
   };
 
   const runner = new Function("api", mod.code);
