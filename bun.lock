@@ -8,6 +8,7 @@
         "preact": "^10.29.1",
       },
       "devDependencies": {
+        "@calcite-loader/types": "^0.1.0",
         "@types/bun": "^1.3.11",
         "@types/chrome": "^0.1.39",
         "@types/firefox-webext-browser": "^143.0.0",
@@ -19,6 +20,8 @@
     },
   },
   "packages": {
+    "@calcite-loader/types": ["@calcite-loader/types@0.1.0", "", { "peerDependencies": { "phaser": "~3.90.0" } }, "sha512-e7KPlp4RA8xtyaR6y06uw9ZQhN7GkMmwABA9DNi+x8JzQ0Ji4/jt6mUuaoT+HJWzA7rms8G8SrKVVqeEAVOyow=="],
+
     "@emnapi/runtime": ["@emnapi/runtime@1.9.2", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-3U4+MIWHImeyu1wnmVygh5WlgfYDtyf0k8AbLhMFxOipihf6nrWC4syIm/SwEeec0mNSafiiNnMJwbza/Is6Lw=="],
 
     "@img/colour": ["@img/colour@1.1.0", "", {}, "sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ=="],

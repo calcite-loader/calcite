@@ -30,6 +30,11 @@
     "jsxImportSource": "preact",
 
     // Extension Types
-    "types": ["@types/bun", "chrome", "firefox-webext-browser"]
+    "types": [
+      "@types/bun",
+      "chrome",
+      "firefox-webext-browser",
+      "@calcite-loader/types"
+    ]
   }
 }
