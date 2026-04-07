@@ -1,3 +1,7 @@
+#calcite-container {
+  --accent: #26e;
+}
+
 #calcite-container dialog {
   & * {
     font-family: Arial, Helvetica, sans-serif;
@@ -30,28 +34,18 @@
     & img {
       max-height: 4rem;
     }
-  }
 
-  & fieldset {
-    border: none;
-
-    & div {
-      position: relative;
-
-      & label {
-        display: flex;
-        gap: 0.5rem;
-      }
+    & button {
+      position: absolute;
+      top: 0;
+      right: 0;
     }
   }
 
   & button {
     background: none;
     border: none;
-    width: 2rem;
+    width: 1.5rem;
     cursor: pointer;
-    position: absolute;
-    top: 0;
-    right: 0;
   }
 }

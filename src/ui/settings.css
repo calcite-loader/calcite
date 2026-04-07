@@ -1,0 +1,135 @@
+#calcite-container dialog.settings {
+  padding: 1rem;
+
+  & header {
+    min-width: 25rem;
+    padding-top: 0.5rem;
+  }
+
+  & ul {
+    list-style: none;
+    padding: 1rem;
+    margin: 0;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  & li {
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    &:has(input[type="color"]) {
+      & label {
+        height: max-content;
+      }
+
+      flex-direction: row;
+      align-items: center;
+      gap: 1rem;
+    }
+  }
+
+  & input[type="text"], & input[type="color"], & input[type="number"] {
+    padding: 0.5rem 0.75rem;
+    border: 2px solid #ccc;
+    border-radius: 0.25rem;
+    transition: border-color 100ms ease-in-out;
+    outline: none;
+
+    &:focus {
+      border-color: #000;
+    }
+
+    &[type="color"] {
+      padding: 0.25rem;
+      cursor: pointer;
+    }
+  }
+
+  & .slider-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  & .setting-slider {
+    flex: 1;
+    height: 5px;
+    border-radius: 5px;
+    background: #ddd;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+
+    &::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: 100%;
+      background: var(--accent);
+      cursor: pointer;
+    }
+
+    &::-moz-range-thumb {
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: 100%;
+      background: var(--accent);
+      cursor: pointer;
+      border: none;
+    }
+  }
+
+  & .slider-value {
+    min-width: 3rem;
+    text-align: right;
+  }
+
+  & .toggle-container {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    width: fit-content;
+  }
+
+  & .setting-toggle {
+    display: none;
+  }
+
+  & .toggle-switch {
+    width: 2.5rem;
+    height: 1.5rem;
+    background-color: #ddd;
+    border-radius: 0.75rem;
+    position: relative;
+    transition: background-color 0.3s;
+
+    &::before {
+      content: "";
+      position: absolute;
+      width: 1rem;
+      height: 1rem;
+      border-radius: 100%;
+      background-color: #fff;
+      top: 50%;
+      translate: 0 -50%;
+      left: 0.1rem;
+      transition: left 0.3s;
+    }
+  }
+
+  & .setting-toggle:checked + .toggle-switch {
+    background-color: var(--accent);
+
+    &::before {
+      left: calc(100% - 1.25rem);
+    }
+  }
+}

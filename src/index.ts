@@ -1,7 +1,7 @@
 import * as Phaser from "phaser";
 import { injectMenuButton } from "./menuButton";
 
-import { initMenu } from "./menu";
+import { initMenu } from "./ui";
 import { hasLoaded, loadMods, modInitCallbacks } from "./mods";
 import { initPatcher } from "./patcher";
 

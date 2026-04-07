@@ -1,4 +1,4 @@
-import { openMenu } from "./menu";
+import { openMenu } from "./ui/menu";
 import { getAssetUrl } from "./assets";
 
 const watchMenuState = (

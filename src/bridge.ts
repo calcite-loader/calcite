@@ -5,6 +5,9 @@ window.addEventListener("message", async (e) => {
 
   if (e.data.type == "SAVE_MOD") {
     const mods = (await api.storage.local.get("mods")).mods || {};
+    if (e.data.mod.id in mods) {
+      e.data.mod.settings = mods[e.data.mod.id].settings;
+    }
     mods[e.data.mod.id] = e.data.mod;
     await api.storage.local.set({ mods });
     window.postMessage({ type: "SAVE_MOD_SUCCESS", id: e.data.mod.id }, "*");
@@ -41,6 +44,18 @@ window.addEventListener("message", async (e) => {
     mods[e.data.id].enabled = false;
     await api.storage.local.set({ mods });
     window.postMessage({ type: "DISABLE_MOD_SUCCESS", id: e.data.id }, "*");
+    return;
+  }
+
+  if (e.data.type == "SET_SETTING") {
+    const mods = (await api.storage.local.get("mods")).mods || {};
+    mods[e.data.modId].settings[e.data.id] = e.data.value;
+    await api.storage.local.set({ mods });
+    window.postMessage({
+      type: "SET_SETTING_SUCCESS",
+      id: e.data.id,
+      modId: e.data.modId,
+    }, "*");
     return;
   }
 

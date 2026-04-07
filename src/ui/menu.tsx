@@ -7,15 +7,55 @@ import {
   executeMod,
   getMods,
   type ModData,
+  modSettingsMap,
   parseMod,
   removeMod,
   saveMod,
-} from "./mods";
-import { getAssetUrl } from "./assets";
+} from "../mods";
+import { getAssetUrl } from "../assets";
+import { Settings } from "./settings";
 
 let openMenuInternal: () => void;
 
-const Menu = () => {
+const ModItem = (props: {
+  mod: ModData;
+  onRemove: (mod: ModData) => void;
+  onToggle: (mod: ModData) => void;
+}) => {
+  const [showSettings, setShowSettings] = useState(false);
+
+  return (
+    <div>
+      <label>
+        <input
+          type="checkbox"
+          checked={props.mod.enabled}
+          onChange={() => props.onToggle(props.mod)}
+        />
+        {props.mod.name}
+      </label>
+      <div className="right">
+        {props.mod.enabled && modSettingsMap[props.mod.id] != null && (
+          <button onClick={() => setShowSettings(true)}>
+            ⚙️
+          </button>
+        )}
+        <button onClick={() => props.onRemove(props.mod)}>
+          🗙
+        </button>
+      </div>
+      {showSettings && (
+        <Settings
+          open={showSettings}
+          onClose={() => setShowSettings(false)}
+          mod={props.mod}
+        />
+      )}
+    </div>
+  );
+};
+
+export const Menu = () => {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   const [logoUrl, setLogoUrl] = useState("");
@@ -24,6 +64,10 @@ const Menu = () => {
   const [mods, setMods] = useState<ModData[]>([]);
 
   useEffect(() => {
+    const styleElem = document.createElement("style");
+    styleElem.textContent = styles;
+    document.head.appendChild(styleElem);
+
     openMenuInternal = () => {
       if (dialogRef.current) dialogRef.current.showModal();
     };
@@ -95,7 +139,7 @@ const Menu = () => {
   };
 
   return (
-    <dialog ref={dialogRef}>
+    <dialog ref={dialogRef} className="main">
       <header>
         <img src={logoUrl} alt="Calcite" />
         <button onClick={handleClose}>
@@ -106,19 +150,12 @@ const Menu = () => {
       {mods.length > 0 && (
         <fieldset>
           {mods.map((mod) => (
-            <div key={mod.id}>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={mod.enabled}
-                  onChange={() => handleToggleMod(mod)}
-                />
-                {mod.name}
-              </label>
-              <button onClick={() => handleRemoveMod(mod)}>
-                🗙
-              </button>
-            </div>
+            <ModItem
+              key={mod.id}
+              mod={mod}
+              onRemove={handleRemoveMod}
+              onToggle={handleToggleMod}
+            />
           ))}
         </fieldset>
       )}
@@ -127,15 +164,3 @@ const Menu = () => {
 };
 
 export const openMenu = () => openMenuInternal();
-
-export const initMenu = () =>
-  document.addEventListener("DOMContentLoaded", () => {
-    const container = document.createElement("div");
-    container.id = "calcite-container";
-    document.body.appendChild(container);
-    render(<Menu />, container);
-
-    const styleElem = document.createElement("style");
-    styleElem.textContent = styles;
-    document.head.appendChild(styleElem);
-  });

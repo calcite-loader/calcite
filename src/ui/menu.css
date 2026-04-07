@@ -1,0 +1,18 @@
+#calcite-container dialog.main fieldset {
+  border: none;
+
+  & div {
+    position: relative;
+
+    & label {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    & .right {
+      position: absolute;
+      top: 0;
+      right: 0;
+    }
+  }
+}
