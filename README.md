@@ -11,11 +11,25 @@ A simple mod loader for Geometry Dash's web port.
 Mods are written in JavaScript and have access to `window.gdGame` (the
 `Phaser.Game` object) and `window.gdScene` (the main `Phaser.Scene` object).
 
-Mods can optionally contain a `// @name My Mod Name` comment to dictate the
-naming of mods, otherwise mods will be added with the name "Untitled mod".
+Mods can optionally contain a header comment to dictate the naming and other
+metadata about mods, otherwise mods will be added with the name "Untitled mod".
 
 Uploading a mod with the same file name as a pre-existing mod will update the
 contents of the mod.
+
+## Roadmap
+
+- [ ] Actions menu (for if a mod is completely breaking the site)
+- [ ] Updating
+  - [ ] Mod versioning
+  - [ ] Auto update
+- [ ] Dependencies
+- [ ] Library-like APIs
+- [ ] Userscript build tartet
+- [ ] More event hooks (e.g. `onStart`)
+- [ ] Make patcher auto-extract required function names (and offset)
+- [ ] Broaden patcher method matching
+- [ ] Mod dev auto reload
 
 ---
 
