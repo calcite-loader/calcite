@@ -1,0 +1,26 @@
+#calcite-container dialog.official-mods {
+  & header {
+    min-width: 25rem;
+  }
+
+  & ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    & div {
+      position: relative;
+
+      & span {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      & .right {
+        position: absolute;
+        top: 0;
+        right: 0;
+      }
+    }
+  }
+}

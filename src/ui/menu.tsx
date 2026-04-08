@@ -1,4 +1,3 @@
-import { render } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import styles from "./menu.css" with { type: "text" };
 import {
@@ -14,6 +13,7 @@ import {
 } from "../mods";
 import { getAssetUrl } from "../assets";
 import { Settings } from "./settings";
+import { openOfficialMods } from "./officialMods";
 
 let openMenuInternal: () => void;
 
@@ -147,6 +147,7 @@ export const Menu = () => {
         </button>
       </header>
       <input type="file" accept=".js" onChange={handleUpload} />
+      <button onClick={openOfficialMods}>Official Mods</button>
       {mods.length > 0 && (
         <fieldset>
           {mods.map((mod) => (

@@ -42,10 +42,20 @@
     }
   }
 
-  & button {
+  .right button, header button {
     background: none;
     border: none;
     width: 1.5rem;
     cursor: pointer;
+  }
+
+  & > button, & *:not(.right, header) > button {
+    width: max-content;
+    cursor: pointer;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.75rem;
   }
 }

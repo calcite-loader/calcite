@@ -1,13 +1,23 @@
-import { render } from "preact";
+import { Fragment, render } from "preact";
 import { Menu } from "./menu";
+import { OfficialMods } from "./officialMods";
 import styles from "./index.css" with { type: "text" };
+
+const Index = () => {
+  return (
+    <Fragment>
+      <Menu />
+      <OfficialMods />
+    </Fragment>
+  );
+};
 
 export const initMenu = () =>
   document.addEventListener("DOMContentLoaded", () => {
     const container = document.createElement("div");
     container.id = "calcite-container";
     document.body.appendChild(container);
-    render(<Menu />, container);
+    render(<Index />, container);
 
     const styleElem = document.createElement("style");
     styleElem.textContent = styles;
