@@ -129,7 +129,6 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
 
     const match = code.match(getMethodRegex(hook.method, id || -1));
     if (!match || match.index == null) {
-      console.log(getMethodRegex(hook.method, id || -1));
       continue;
     }
 
