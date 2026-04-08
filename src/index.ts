@@ -50,7 +50,6 @@ const executeHook = () => {
               get: function () {
                 if (!this._hooked) {
                   this._hooked = true;
-                  console.log(this._sys.settings.key);
                   if (this._sys.settings.key == "GameScene") {
                     window.gdScene = this;
 
