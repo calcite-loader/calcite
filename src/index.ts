@@ -4,6 +4,7 @@ import { injectMenuButton } from "./menuButton";
 import { initMenu } from "./ui";
 import { hasLoaded, loadMods, modInitCallbacks } from "./mods";
 import { initPatcher } from "./patcher";
+import { registerHooks } from "./hooks";
 
 initPatcher();
 
@@ -61,6 +62,8 @@ const executeHook = () => {
                             hasLoaded();
                             injectMenuButton();
                             modInitCallbacks.forEach((cb) => cb());
+
+                            registerHooks();
                           }, 0);
                         });
                         return;

@@ -1,3 +1,4 @@
+import { createEventCallback } from "./hooks";
 import { patchMethod } from "./patcher";
 import type { ModSetting } from "@calcite-loader/types";
 
@@ -142,6 +143,13 @@ export const executeMod = (mod: ModData) => {
       if (gdLoaded) cb();
       else modInitCallbacks.push(cb);
     },
+    onStart: createEventCallback("start"),
+    onPause: createEventCallback("pause"),
+    onComplete: createEventCallback("complete"),
+    onCube: createEventCallback("cube"),
+    onShip: createEventCallback("ship"),
+    onDeath: createEventCallback("death"),
+    onSpawn: createEventCallback("spawn"),
     patchMethod,
     registerSettings: (settings: Record<string, ModSetting>) => {
       modSettingsMap[mod.id] = settings;

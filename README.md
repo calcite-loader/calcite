@@ -26,11 +26,12 @@ contents of the mod.
 - [ ] Dependencies
 - [ ] Library-like APIs
 - [ ] Userscript build tartet
-- [ ] More event hooks (e.g. `onStart`)
+- [x] More event hooks (e.g. `onStart`, `onUpdate`, `onPause`)
 - [ ] Make patcher auto-extract required function names (and offset)
 - [x] Broaden patcher method matching
 - [x] Source mod compatibility
 - [ ] Mod dev auto reload
+- [ ] `file` setting type
 
 ---
 
