@@ -27,7 +27,7 @@ contents of the mod.
 - [ ] Library-like APIs
 - [ ] Userscript build tartet
 - [x] More event hooks (e.g. `onStart`, `onUpdate`, `onPause`)
-- [ ] Make patcher auto-extract required function names (and offset)
+- [x] Make patcher auto-extract required function names (and offset)
 - [x] Broaden patcher method matching
 - [x] Source mod compatibility
 - [ ] Mod dev auto reload

@@ -77,11 +77,37 @@ const getMethodRegex = (method: string, id: number) => {
 };
 
 const getDeobfuscateMap = (code: string): Record<string, number> => {
-  const offset = 0x103;
-  const arraySource = extractFunction(code, "_0x4491");
-  const deobfSource = extractFunction(code, "_0x46a7");
+  const deobfMatch = code.match(/var\s+_0x[\da-f]+\s*=\s*(_0x[\da-f]+)/);
+  if (!deobfMatch || !deobfMatch[1]) {
+    console.error("Failed to find name of debobfuscator function.");
+    return {};
+  }
+  const deobfSource = extractFunction(code, deobfMatch[1])!;
+
+  const offsetMatch = deobfSource.match(
+    /(_0x[\da-f]+)\s*=\s*\1\s*-\s*(0x[\da-f]+|\d+)/,
+  );
+  if (!offsetMatch || !offsetMatch[2]) {
+    console.error("Failed to find offset.");
+    return {};
+  }
+  const offset = parseInt(offsetMatch[2]);
+
+  const arrayMatch = code.match(
+    /var\s+_0x[\da-f]+\s*=\s*(_0x[\da-f]+)\s*\(\s*\)/,
+  );
+  if (!arrayMatch || !arrayMatch[1]) {
+    console.error("Failed to find name of array source method.");
+    return {};
+  }
+  const arraySource = extractFunction(code, arrayMatch[1]);
+
   const rotationSource = code.match(
-    /\(function\s*\(_0x\w+,\s*_0x\w+\)\s*\{[\s\S]*?\}\(_0x4491,\s*0x\w+\)\);/,
+    new RegExp(
+      `\\(function\\s*\\(_0x\\w+,\\s*_0x\\w+\\)\\s*\\{[\\s\\S]*?\\}\\(${
+        arrayMatch[1]
+      },\\s*0x\\w+\\)\\);`,
+    ),
   )?.[0];
 
   const deobfuscateMap: Record<string, number> = {};
@@ -93,11 +119,11 @@ const getDeobfuscateMap = (code: string): Record<string, number> => {
       ${rotationSource}
       
       const map = {};
-      const finalArray = _0x4491();
+      const finalArray = ${arrayMatch[1]}();
       
       for (let i = 0; i < finalArray.length; i++) {
         try {
-          const val = _0x46a7(i + ${offset});
+          const val = ${deobfMatch[1]}(i + ${offset});
           if (val && typeof val === 'string') {
             map[val] = i + ${offset};
           }
@@ -110,7 +136,7 @@ const getDeobfuscateMap = (code: string): Record<string, number> => {
     Object.assign(deobfuscateMap, resultMap);
   } catch (e) {
     console.error(
-      "Patcher: Sandbox failed. Check if _0x46a7 is correctly extracted.",
+      "Patcher: Sandbox failed.",
       e,
     );
   }
