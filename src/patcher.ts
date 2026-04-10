@@ -1,17 +1,25 @@
 import { onModsLoaded } from "./mods";
 
 interface Hook {
-  method: string;
+  target: string;
   modifier: (code: string) => string;
 }
 
-const hooks: Hook[] = [];
+const methodHooks: Hook[] = [];
+const scriptHooks: Hook[] = [];
 
 export const patchMethod = (
   method: string,
   modifier: (code: string) => string,
 ) => {
-  hooks.push({ method, modifier });
+  methodHooks.push({ target: method, modifier });
+};
+
+export const patchScript = (
+  script: string,
+  modifier: (code: string) => string,
+) => {
+  scriptHooks.push({ target: script, modifier });
 };
 
 const extractFunction = (code: string, funcName: string): string | null => {
@@ -126,10 +134,15 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
 
   const deobfuscateMap = getDeobfuscateMap(code);
 
-  for (const hook of hooks) {
-    const id = deobfuscateMap[hook.method];
+  for (const hook of scriptHooks) {
+    if (originalSrc.split("/").at(-1) != hook.target) continue;
+    code = hook.modifier(code);
+  }
 
-    const match = code.match(getMethodRegex(hook.method, id || -1));
+  for (const hook of methodHooks) {
+    const id = deobfuscateMap[hook.target];
+
+    const match = code.match(getMethodRegex(hook.target, id || -1));
     if (!match || match.index == null) {
       continue;
     }

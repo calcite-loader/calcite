@@ -1,5 +1,5 @@
 import { createEventCallback } from "./hooks";
-import { patchMethod } from "./patcher";
+import { patchMethod, patchScript } from "./patcher";
 import type { ModSetting } from "@calcite-loader/types";
 
 export interface ModData {
@@ -151,6 +151,7 @@ export const executeMod = (mod: ModData) => {
     onDeath: createEventCallback("death"),
     onSpawn: createEventCallback("spawn"),
     patchMethod,
+    patchScript,
     registerSettings: (settings: Record<string, ModSetting>) => {
       modSettingsMap[mod.id] = settings;
 
