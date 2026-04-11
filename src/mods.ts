@@ -186,8 +186,18 @@ export const executeMod = (mod: ModData) => {
       modifier: (code: string) => string,
     ) => {
       const code = method.toString();
-      const body = code.slice(code.indexOf("{") + 1, code.lastIndexOf("}"));
-      const args = code.substring(code.indexOf("(") + 1, code.indexOf(")"));
+
+      const firstBrace = code.indexOf("{");
+      const lastParenBeforeBrace = code.lastIndexOf(")", firstBrace);
+      const firstParenBeforeBrace = code.lastIndexOf("(", lastParenBeforeBrace);
+
+      const args = code.substring(
+        firstParenBeforeBrace + 1,
+        lastParenBeforeBrace,
+      );
+      const body = code.slice(firstBrace + 1, code.lastIndexOf("}"));
+
+      console.log(body);
 
       return new Function(args, modifier(body));
     },
