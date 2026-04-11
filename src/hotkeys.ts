@@ -13,7 +13,7 @@ export const initHotkeys = () => {
 
     const mods = await getMods();
     mods.forEach((mod) => {
-      Object.entries(modHotkeysMap[mod.id]!).forEach(([id, hotkey]) => {
+      Object.entries(modHotkeysMap[mod.id] || {}).forEach(([id, hotkey]) => {
         const defaultCombo = typeof hotkey.default === "string"
           ? [hotkey.default]
           : hotkey.default;
@@ -33,7 +33,7 @@ export const initHotkeys = () => {
 
     const affected: { mod: ModData; id: string; hotkey: Hotkey }[] = [];
     mods.forEach((mod) => {
-      Object.entries(modHotkeysMap[mod.id]!).forEach(([id, hotkey]) => {
+      Object.entries(modHotkeysMap[mod.id] || {}).forEach(([id, hotkey]) => {
         const defaultCombo = typeof hotkey.default === "string"
           ? [hotkey.default]
           : hotkey.default;
@@ -57,7 +57,7 @@ export const initHotkeys = () => {
   window.addEventListener("blur", async () => {
     const mods = await getMods();
     mods.forEach((mod) => {
-      Object.entries(modHotkeysMap[mod.id]!).forEach(([id, hotkey]) => {
+      Object.entries(modHotkeysMap[mod.id] || {}).forEach(([id, hotkey]) => {
         if (isHotkeyDown(mod, id)) hotkey.onReleased?.();
       });
     });
