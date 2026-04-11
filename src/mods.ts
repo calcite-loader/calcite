@@ -153,6 +153,16 @@ export const executeMod = (mod: ModData) => {
     onUpdate: createEventCallback("update"),
     patchMethod,
     patchScript,
+    createdPatchedMethod: (
+      method: Function,
+      modifier: (code: string) => string,
+    ) => {
+      const code = method.toString();
+      const body = code.slice(code.indexOf("{") + 1, code.lastIndexOf("}"));
+      const args = code.substring(code.indexOf("(") + 1, code.indexOf(")"));
+
+      return new Function(args, modifier(body));
+    },
     registerSettings: (settings: Record<string, ModSetting>) => {
       modSettingsMap[mod.id] = settings;
 
