@@ -181,7 +181,7 @@ export const executeMod = (mod: ModData) => {
     onUpdate: createEventCallback("update"),
     patchMethod,
     patchScript,
-    createdPatchedMethod: (
+    createPatchedMethod: (
       method: Function,
       modifier: (code: string) => string,
     ) => {
