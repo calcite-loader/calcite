@@ -150,6 +150,7 @@ export const executeMod = (mod: ModData) => {
     onShip: createEventCallback("ship"),
     onDeath: createEventCallback("death"),
     onSpawn: createEventCallback("spawn"),
+    onUpdate: createEventCallback("update"),
     patchMethod,
     patchScript,
     registerSettings: (settings: Record<string, ModSetting>) => {

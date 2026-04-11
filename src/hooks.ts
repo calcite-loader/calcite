@@ -13,6 +13,7 @@ const callbacks = {
   spawn: { before: [], after: [] } as Callbacks,
   ship: { before: [], after: [] } as Callbacks,
   cube: { before: [], after: [] } as Callbacks,
+  update: { before: [], after: [] } as Callbacks,
 };
 
 export const createEventCallback =
@@ -94,5 +95,11 @@ export const registerHooks = () => {
     hookName: "cube",
     target: window.gdScene._player,
     method: "exitShipMode",
+  });
+
+  window.gdScene._player.syncSprites = createHookWrapper({
+    hookName: "update",
+    target: window.gdScene._player,
+    method: "syncSprites",
   });
 };
