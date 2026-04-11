@@ -5,6 +5,7 @@ import { initMenu } from "./ui";
 import { hasLoaded, loadMods, modInitCallbacks } from "./mods";
 import { initPatcher } from "./patcher";
 import { registerHooks } from "./hooks";
+import { initHotkeys } from "./hotkeys";
 
 initPatcher();
 
@@ -59,6 +60,7 @@ const executeHook = () => {
                         this._sys.events.once("start", () => {
                           console.log("Geometry Dash Loaded!");
                           setTimeout(() => {
+                            initHotkeys();
                             hasLoaded();
                             injectMenuButton();
                             modInitCallbacks.forEach((cb) => cb());

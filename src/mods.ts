@@ -1,6 +1,7 @@
 import { createEventCallback } from "./hooks";
+import { isHotkeyDown, modHotkeysMap } from "./hotkeys";
 import { patchMethod, patchScript } from "./patcher";
-import type { ModSetting } from "@calcite-loader/types";
+import type { Hotkey, ModSetting } from "@calcite-loader/types";
 
 export interface ModData {
   id: string;
@@ -9,6 +10,7 @@ export interface ModData {
   needsRefresh: boolean;
   enabled: boolean;
   settings: Record<string, number | string | boolean>;
+  hotkeys: Record<string, string[]>;
 }
 
 export const modSettingsMap: Record<string, Record<string, ModSetting>> = {};
@@ -40,6 +42,7 @@ export const parseMod = (fileName: string, code: string): ModData => {
     needsRefresh: fields.needsRefresh === "true",
     enabled: true,
     settings: {},
+    hotkeys: {},
   };
 };
 
@@ -128,6 +131,31 @@ export const setSetting = (
   });
 };
 
+export const setHotkey = (
+  id: string,
+  value: string | string[],
+  mod: ModData,
+): Promise<void> => {
+  return new Promise((resolve) => {
+    const handler = (e: MessageEvent) => {
+      if (
+        e.data.type === "SET_HOTKEY_SUCCESS" && mod.id === e.data.modId &&
+        id === e.data.id
+      ) {
+        window.removeEventListener("message", handler);
+        resolve();
+      }
+    };
+    window.addEventListener("message", handler);
+    window.postMessage({
+      type: "SET_HOTKEY",
+      id,
+      value: typeof value === "string" ? [value] : value,
+      modId: mod.id,
+    }, "*");
+  });
+};
+
 let gdLoaded = false;
 export const hasLoaded = () => {
   gdLoaded = true;
@@ -170,6 +198,17 @@ export const executeMod = (mod: ModData) => {
       for (const [id, setting] of Object.entries(modSettingsMap[mod.id]!)) {
         Object.defineProperty(ret, id, {
           get: () => mod.settings[id] ?? setting.default,
+        });
+      }
+      return ret;
+    },
+    registerHotkeys: (hotkeys: Record<string, Hotkey>) => {
+      modHotkeysMap[mod.id] = hotkeys;
+
+      const ret = {};
+      for (const id of Object.keys(modHotkeysMap[mod.id]!)) {
+        Object.defineProperty(ret, id, {
+          get: () => isHotkeyDown(mod, id),
         });
       }
       return ret;

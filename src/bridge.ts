@@ -60,6 +60,18 @@ window.addEventListener("message", async (e) => {
     return;
   }
 
+  if (e.data.type == "SET_HOTKEY") {
+    const mods = (await api.storage.local.get("mods")).mods || {};
+    mods[e.data.modId].hotkeys[e.data.id] = e.data.value;
+    await api.storage.local.set({ mods });
+    window.postMessage({
+      type: "SET_HOTKEY_SUCCESS",
+      id: e.data.id,
+      modId: e.data.modId,
+    }, "*");
+    return;
+  }
+
   if (e.data.type == "GET_ASSET") {
     const url = api.runtime.getURL(e.data.path);
     window.postMessage({

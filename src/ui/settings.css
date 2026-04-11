@@ -6,6 +6,10 @@
     padding-top: 0.5rem;
   }
 
+  & h4 {
+    margin-left: 1rem;
+  }
+
   & ul {
     list-style: none;
     padding: 1rem;
@@ -32,6 +36,24 @@
       flex-direction: row;
       align-items: center;
       gap: 1rem;
+    }
+
+    &.hotkey {
+      flex-direction: row;
+      align-items: center;
+      position: relative;
+
+      & > div {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        position: absolute;
+        right: 0;
+      }
+
+      & .hotkey-display {
+        font-size: 0.75rem;
+      }
     }
   }
 

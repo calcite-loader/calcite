@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import styles from "./settings.css" with { type: "text" };
-import { type ModData, modSettingsMap, setSetting } from "../mods";
-import type { ModSetting } from "@calcite-loader/types";
+import { type ModData, modSettingsMap, setHotkey, setSetting } from "../mods";
+import { modHotkeysMap } from "../hotkeys";
+import type { Hotkey, ModSetting } from "@calcite-loader/types";
 
 let openMenuInternal: () => void;
 
@@ -112,6 +113,95 @@ export const Settings = (
   };
 
   const settings = modSettingsMap[props.mod.id] as Record<string, ModSetting>;
+  const hotkeys = modHotkeysMap[props.mod.id] ?? {};
+
+  const HotkeyRow = ({
+    id,
+    hotkey,
+  }: {
+    id: string;
+    hotkey: Hotkey;
+  }) => {
+    const [listening, setListening] = useState(false);
+    const [pressed, setPressed] = useState<string[]>(
+      props.mod.hotkeys[id] ||
+        (typeof hotkey.default === "string"
+          ? [hotkey.default]
+          : hotkey.default),
+    );
+
+    useEffect(() => {
+      if (!listening) return;
+
+      const current = new Set<string>();
+
+      const down = (e: { key: string }) => {
+        const k = e.key.toLowerCase();
+        current.add(k);
+        setPressed(Array.from(current));
+      };
+
+      window.gdScene.input.keyboard?.on("keydown", down);
+
+      const onBlur = () => {
+        window.gdScene.input.keyboard?.off("keydown", down);
+        setListening(false);
+      };
+
+      window.addEventListener("blur", onBlur);
+
+      return () => {
+        window.gdScene.input.keyboard?.off("keydown", down);
+        window.removeEventListener("blur", onBlur);
+      };
+    }, [listening]);
+
+    const startListening = () => {
+      setPressed([]);
+      setListening(true);
+    };
+
+    const cancel = () => {
+      setPressed(
+        props.mod.hotkeys[id] ||
+          (typeof hotkey.default === "string"
+            ? [hotkey.default]
+            : hotkey.default),
+      );
+      setListening(false);
+    };
+
+    const confirm = async () => {
+      const keys = pressed.map((k) => k.toLowerCase());
+      props.mod.hotkeys = props.mod.hotkeys || {};
+      props.mod.hotkeys[id] = keys;
+      await setHotkey(id, keys, props.mod as ModData);
+      setListening(false);
+    };
+
+    return (
+      <li key={id} className="hotkey">
+        <label>{hotkey?.name ?? id}</label>
+        <div>
+          <div className="hotkey-display">
+            {(pressed.length ? pressed : (props.mod.hotkeys[id] ||
+              (typeof hotkey.default === "string"
+                ? [hotkey.default]
+                : hotkey.default))).map((key) =>
+                key[0]?.toUpperCase() + key.slice(1)).join(
+                " + ",
+              ) || "Unassigned"}
+          </div>
+          {!listening ? <button onClick={startListening}>Change</button> : (
+            <>
+              <button onClick={confirm}>Save</button>
+              <button onClick={cancel}>Cancel</button>
+            </>
+          )}
+        </div>
+      </li>
+    );
+  };
 
   return (
     <dialog ref={dialogRef} className="settings">
@@ -133,6 +223,17 @@ export const Settings = (
           </li>
         ))}
       </ul>
+
+      {Object.entries(hotkeys).length > 0 && (
+        <>
+          <h4>Hotkeys</h4>
+          <ul className="hotkeys-list">
+            {Object.entries(hotkeys).map(([id, hk]) => (
+              <HotkeyRow id={id} hotkey={hk} />
+            ))}
+          </ul>
+        </>
+      )}
     </dialog>
   );
 };
