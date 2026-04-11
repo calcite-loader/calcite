@@ -72,7 +72,7 @@ const getMethodRegex = (method: string, id: number) => {
   const decStr = id.toString(10);
   const escapedMethod = method.replace(/[|\\{}()[\]^$+*?.]/g, "\\$&");
   return new RegExp(
-    `\\[(?:(?:"${escapedMethod}"|'${escapedMethod}'|\`${escapedMethod}\`)|(?:_0x[\\da-f]+\\s*\\(\\s*(?:${hexStr}|${decStr})\\s*\\)))\\]|${escapedMethod}\\s*\\([^\\)]*\\)\\s*{`,
+    `(?:\\[(?:(?:"${escapedMethod}"|'${escapedMethod}'|\`${escapedMethod}\`)|(?:_0x[\\da-f]+\\s*\\(\\s*(?:${hexStr}|${decStr})\\s*\\)))\\]|${escapedMethod})\\s*\\([^\\)]*\\)\\s*{`,
   );
 };
 
