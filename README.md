@@ -4,6 +4,8 @@
 
 ---
 
+<a href="https://addons.mozilla.org/en-US/firefox/addon/calcite/"><img src="https://blog.mozilla.org/addons/files/2020/04/get-the-addon-fx-apr-2020.svg" width="100" /></a>
+
 A simple mod loader for Geometry Dash's web port.
 
 ## Usage
