@@ -32,7 +32,7 @@ contents of the mod.
 - [x] Source mod compatibility
 - [ ] Mod dev auto reload
 - [ ] `file` setting type
-- [ ] Keybinds API
+- [x] Hotkeys API
 
 ---
 
