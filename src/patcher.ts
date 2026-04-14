@@ -22,7 +22,10 @@ export const patchScript = (
   scriptHooks.push({ target: script, modifier });
 };
 
-const extractFunction = (code: string, funcName: string): string | null => {
+export const extractFunction = (
+  code: string,
+  funcName: string,
+): string | null => {
   const start = code.indexOf("function " + funcName);
   if (start === -1) return null;
 
@@ -160,11 +163,6 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
 
   const deobfuscateMap = getDeobfuscateMap(code);
 
-  for (const hook of scriptHooks) {
-    if (originalSrc.split("/").at(-1) != hook.target) continue;
-    code = hook.modifier(code);
-  }
-
   for (const hook of methodHooks) {
     const id = deobfuscateMap[hook.target];
 
@@ -177,6 +175,11 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
     if (!originalCode) continue;
 
     code = code.replace(originalCode, hook.modifier(originalCode));
+  }
+
+  for (const hook of scriptHooks) {
+    if (originalSrc.split("/").at(-1) != hook.target) continue;
+    code = hook.modifier(code);
   }
 
   const patchedScript = document.createElement("script");

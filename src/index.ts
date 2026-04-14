@@ -6,7 +6,9 @@ import { hasLoaded, loadMods, modInitCallbacks } from "./mods";
 import { initPatcher } from "./patcher";
 import { registerHooks } from "./hooks";
 import { initHotkeys } from "./hotkeys";
+import { initUtils } from "./utils";
 
+initUtils();
 initPatcher();
 
 const executeHook = () => {
