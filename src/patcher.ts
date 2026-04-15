@@ -147,6 +147,8 @@ const getDeobfuscateMap = (code: string): Record<string, number> => {
   return deobfuscateMap;
 };
 
+export let mainDeobfuscateMap: Record<string, number> = {};
+
 const interceptScript = async (scriptNode: HTMLScriptElement) => {
   const originalSrc = scriptNode.src;
   const isModule = scriptNode.type === "module";
@@ -162,6 +164,9 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
   let code = await response.text();
 
   const deobfuscateMap = getDeobfuscateMap(code);
+  if (originalSrc.split("/").at(-1) === "index-game.js") {
+    mainDeobfuscateMap = deobfuscateMap;
+  }
 
   for (const hook of methodHooks) {
     const id = deobfuscateMap[hook.target];

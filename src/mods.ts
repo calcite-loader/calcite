@@ -1,6 +1,6 @@
 import { createEventCallback } from "./hooks";
 import { isHotkeyDown, modHotkeysMap } from "./hotkeys";
-import { patchMethod, patchScript } from "./patcher";
+import { mainDeobfuscateMap, patchMethod, patchScript } from "./patcher";
 import type { Hotkey, ModSetting } from "@calcite-loader/types";
 
 export interface ModData {
@@ -223,6 +223,7 @@ export const executeMod = (mod: ModData) => {
       }
       return ret;
     },
+    getObfuscatedId: (val: string) => mainDeobfuscateMap[val],
   };
 
   const runner = new Function("api", mod.code);
