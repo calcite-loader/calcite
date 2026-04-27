@@ -13,14 +13,14 @@ interface ManifestItem {
 const installMod = async (mod: ManifestItem) => {
   const result = await fetch(mod.downloadUrl);
   const code = await result.text();
-  const parsedMod = parseMod(mod.id + ".js", code);
-
-  await saveMod(parsedMod);
+  const parsedMod = await parseMod(mod.id + ".js", code);
 
   const currentMods = await getMods();
 
+  await saveMod(parsedMod);
+
   if (!Object.keys(currentMods).includes(mod.id) && !parsedMod.needsRefresh) {
-    executeMod(parsedMod);
+    await executeMod(parsedMod);
   }
 };
 

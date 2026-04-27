@@ -31,6 +31,7 @@ const ModItem = (props: {
           type="checkbox"
           checked={props.mod.enabled}
           onChange={() => props.onToggle(props.mod)}
+          disabled={props.mod.type == "library"}
         />
         {props.mod.name}
       </label>
@@ -88,7 +89,7 @@ export const Menu = () => {
     const file = (e.target as HTMLInputElement).files?.[0] as File;
     const reader = new FileReader();
     reader.onload = async () => {
-      const newMod = parseMod(file.name, reader.result as string);
+      const newMod = await parseMod(file.name, reader.result as string);
 
       setMods((prevMods) => {
         const existingIndex = prevMods.findIndex((m) => m.id === newMod.id);
@@ -125,7 +126,7 @@ export const Menu = () => {
     } else {
       await enableMod(mod);
       if (mod.needsRefresh) setNeedRefresh(true);
-      else executeMod(mod);
+      else await executeMod(mod);
     }
 
     setMods((prevMods) =>

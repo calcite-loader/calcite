@@ -1,10 +1,22 @@
 import { createEventCallback } from "./hooks";
 import { isHotkeyDown, modHotkeysMap } from "./hotkeys";
-import { mainDeobfuscateMap, patchMethod, patchScript } from "./patcher";
-import type { Hotkey, ModSetting } from "@calcite-loader/types";
+import {
+  extractFunction,
+  mainDeobfuscateMap,
+  patchMethod,
+  patchScript,
+} from "./patcher";
+import type { Api, Hotkey, ModSetting } from "@calcite-loader/types";
+
+interface Dependency {
+  id: string;
+  downloadUrl?: string;
+}
 
 export interface ModData {
   id: string;
+  type: "library" | "mod";
+  deps: Dependency[];
   code: string;
   name: string;
   needsRefresh: boolean;
@@ -32,11 +44,47 @@ const parseHeaderFields = (code: string): Record<string, string> => {
   return fields;
 };
 
-export const parseMod = (fileName: string, code: string): ModData => {
+const parseDeps = (text: string): Dependency[] => {
+  return text.split(",").map((dep) => dep.trim()).map((dep) =>
+    dep.includes(";")
+      ? {
+        id: dep.split(";", 1)[0]!.trim(),
+        downloadUrl: dep.split(";", 1)[1]!.trim(),
+      }
+      : { id: dep }
+  );
+};
+
+export const parseMod = async (
+  fileName: string,
+  code: string,
+): Promise<ModData> => {
   const fields = parseHeaderFields(code);
+  const id = fields.id ?? fileName.split(".").slice(0, -1).join(".");
+
+  let deps: Dependency[] = [];
+  if (fields.deps) {
+    deps = parseDeps(fields.deps);
+    const mods = await getMods();
+    for (const dep of deps) {
+      if (
+        mods.find((mod) => mod.id === dep.id) != null || id === dep.id ||
+        !dep.downloadUrl
+      ) {
+        continue;
+      }
+
+      const result = await fetch(dep.downloadUrl);
+      const parsedMod = await parseMod(dep.id + ".js", await result.text());
+      if (parsedMod.type !== "library") continue;
+      await saveMod(parsedMod);
+    }
+  }
 
   return {
-    id: fields.id ?? fileName.split(".").slice(0, -1).join("."),
+    id,
+    type: fields.type === "library" ? "library" : "mod",
+    deps,
     code,
     name: fields.name || "Untitled Mod",
     needsRefresh: fields.needsRefresh === "true",
@@ -156,6 +204,8 @@ export const setHotkey = (
   });
 };
 
+const loadedLibs: Record<string, Record<string, any>> = {};
+
 let gdLoaded = false;
 export const hasLoaded = () => {
   gdLoaded = true;
@@ -163,8 +213,24 @@ export const hasLoaded = () => {
 
 export const modInitCallbacks: (() => void)[] = [];
 
-export const executeMod = (mod: ModData) => {
+declare global {
+  interface Window {
+    gdApis: Record<string, Api>;
+  }
+}
+window.gdApis = {};
+
+export const executeMod = async (mod: ModData) => {
   console.log("Injecting Mod: " + mod.name);
+
+  const mods = await getMods();
+  for (const dep of mod.deps) {
+    if (dep.id in loadedLibs) continue;
+
+    const lib = mods.find((mod) => mod.id === dep.id);
+    if (!lib) continue;
+    loadedLibs[dep.id] = await executeMod(lib);
+  }
 
   const api = {
     onLoad: (cb: () => void) => {
@@ -197,8 +263,6 @@ export const executeMod = (mod: ModData) => {
       );
       const body = code.slice(firstBrace + 1, code.lastIndexOf("}"));
 
-      console.log(body);
-
       return new Function(args, modifier(body));
     },
     registerSettings: (settings: Record<string, ModSetting>) => {
@@ -224,10 +288,32 @@ export const executeMod = (mod: ModData) => {
       return ret;
     },
     getObfuscatedId: (val: string) => mainDeobfuscateMap[val],
-  };
+    extractFunction,
+    lib: (id: string) => loadedLibs[id],
+  } as unknown as Api;
 
-  const runner = new Function("api", mod.code);
-  runner(api);
+  if (mod.type === "mod") {
+    const runner = new Function("api", mod.code);
+    runner(api);
+    return;
+  }
+
+  window.gdApis[mod.id] = api;
+
+  const blob = new Blob(
+    [`const api = window.gdApis["${mod.id}"];\n`, mod.code],
+    {
+      type: "application/javascript",
+    },
+  );
+  const url = URL.createObjectURL(blob);
+
+  try {
+    return await import(url);
+  } finally {
+    URL.revokeObjectURL(url);
+    delete window.gdApis[mod.id];
+  }
 };
 
 let modsLoaded = false;
@@ -240,7 +326,7 @@ export const onModsLoaded = (cb: () => void) => {
 export const loadMods = async () => {
   const mods = await getMods();
   for (const mod of mods) {
-    if (mod.enabled) executeMod(mod);
+    if (mod.enabled && mod.type !== "library") await executeMod(mod);
   }
   modsLoaded = true;
   modsLoadedCallbacks.forEach((cb) => cb());

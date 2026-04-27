@@ -1,27 +1,6 @@
-import { extractFunction, patchMethod, patchScript } from "./patcher";
-
-let createImageFromAtlasName: string;
+import { patchScript } from "./patcher";
 
 export const initUtils = () => {
-  // The following two make createImageFromAtlas available at window.createImageFromAtlas
-  patchMethod("_addGlowSprite", (code) => {
-    createImageFromAtlasName = code.match(/let\s+_0x[\da-f]+\s*=\s*(\w+)\s*\(/)
-      ?.[1]!;
-    return code;
-  });
-
-  patchScript("index-game.js", (code) => {
-    const originalFunction = extractFunction(
-      code,
-      createImageFromAtlasName,
-    ) as string;
-    return code.replace(
-      originalFunction,
-      originalFunction +
-        `;window.createImageFromAtlas=${createImageFromAtlasName};`,
-    );
-  });
-
   // Makes pako available at window.pako
   patchScript("index-game.js", (code) => {
     return code.replace(

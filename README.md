@@ -25,8 +25,8 @@ contents of the mod.
 - [ ] Updating
   - [ ] Mod versioning
   - [ ] Auto update
-- [ ] Dependencies
-- [ ] Library-like APIs
+- [x] Dependencies
+- [x] Libraries
 - [ ] Userscript build target
 - [x] More event hooks (e.g. `onStart`, `onUpdate`, `onPause`)
 - [x] Make patcher auto-extract required function names (and offset)
