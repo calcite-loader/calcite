@@ -17,6 +17,7 @@ export interface ModData {
   id: string;
   type: "library" | "mod";
   deps: Dependency[];
+  conflicts: string[];
   code: string;
   name: string;
   needsRefresh: boolean;
@@ -76,8 +77,21 @@ export const parseMod = async (
 
       const result = await fetch(dep.downloadUrl);
       const parsedMod = await parseMod(dep.id + ".js", await result.text());
-      if (parsedMod.type !== "library") continue;
+      if (!parsedMod || parsedMod.type !== "library") continue;
       await saveMod(parsedMod);
+    }
+  }
+
+  let conflicts: string[] = [];
+  let enabled = true;
+  if (fields.conflicts) {
+    conflicts = fields.conflicts.split(",").map((conflict) => conflict.trim());
+
+    const mods = await getMods();
+    for (const mod of mods) {
+      if (conflicts.includes(mod.id) || mod.conflicts.includes(id)) {
+        enabled = false;
+      }
     }
   }
 
@@ -85,10 +99,11 @@ export const parseMod = async (
     id,
     type: fields.type === "library" ? "library" : "mod",
     deps,
+    conflicts,
     code,
     name: fields.name || "Untitled Mod",
     needsRefresh: fields.needsRefresh === "true",
-    enabled: true,
+    enabled,
     settings: {},
     hotkeys: {},
   };
@@ -205,6 +220,7 @@ export const setHotkey = (
 };
 
 const loadedLibs: Record<string, Record<string, any>> = {};
+const loadedMods: string[] = [];
 
 let gdLoaded = false;
 export const hasLoaded = () => {
@@ -212,6 +228,10 @@ export const hasLoaded = () => {
 };
 
 export const modInitCallbacks: (() => void)[] = [];
+const receiveMessageCallbacks: Record<
+  string,
+  (source: string, data: any) => void
+> = {};
 
 declare global {
   interface Window {
@@ -290,6 +310,15 @@ export const executeMod = async (mod: ModData) => {
     getObfuscatedId: (val: string) => mainDeobfuscateMap[val],
     extractFunction,
     lib: (id: string) => loadedLibs[id],
+    get loadedMods() {
+      return loadedMods;
+    },
+    onMessage: (cb: (source: string, data: any) => void) => {
+      receiveMessageCallbacks[mod.id] = cb;
+    },
+    sendMessage: (target: string, data?: string) => {
+      receiveMessageCallbacks[target]?.(mod.id, data);
+    },
   } as unknown as Api;
 
   if (mod.type === "mod") {

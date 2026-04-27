@@ -19,19 +19,29 @@ let openMenuInternal: () => void;
 
 const ModItem = (props: {
   mod: ModData;
+  mods: ModData[];
   onRemove: (mod: ModData) => void;
   onToggle: (mod: ModData) => void;
 }) => {
   const [showSettings, setShowSettings] = useState(false);
+
+  let forceDisable = false;
+  for (const mod of props.mods) {
+    if (!mod.enabled) continue;
+    if (
+      mod.conflicts.includes(props.mod.id) ||
+      props.mod.conflicts.includes(mod.id)
+    ) forceDisable = true;
+  }
 
   return (
     <div>
       <label>
         <input
           type="checkbox"
-          checked={props.mod.enabled}
+          checked={props.mod.enabled && !forceDisable}
           onChange={() => props.onToggle(props.mod)}
-          disabled={props.mod.type == "library"}
+          disabled={props.mod.type == "library" || forceDisable}
         />
         {props.mod.name}
       </label>
@@ -155,6 +165,7 @@ export const Menu = () => {
             <ModItem
               key={mod.id}
               mod={mod}
+              mods={mods}
               onRemove={handleRemoveMod}
               onToggle={handleToggleMod}
             />
