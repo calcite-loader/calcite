@@ -36,7 +36,7 @@ export const parseMod = (fileName: string, code: string): ModData => {
   const fields = parseHeaderFields(code);
 
   return {
-    id: fileName.split(".").slice(0, -1).join("."),
+    id: fields.id ?? fileName.split(".").slice(0, -1).join("."),
     code,
     name: fields.name || "Untitled Mod",
     needsRefresh: fields.needsRefresh === "true",
