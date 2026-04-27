@@ -91,6 +91,7 @@ export const parseMod = async (
 
     const mods = await getMods();
     for (const mod of mods) {
+      if (!mod.enabled) continue;
       if (conflicts.includes(mod.id) || mod.conflicts.includes(id)) {
         enabled = false;
       }
