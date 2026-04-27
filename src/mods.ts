@@ -68,17 +68,19 @@ export const parseMod = async (
     deps = parseDeps(fields.deps);
     const mods = await getMods();
     for (const dep of deps) {
-      if (
-        mods.find((mod) => mod.id === dep.id) != null || id === dep.id ||
-        !dep.downloadUrl
-      ) {
-        continue;
+      if (id === dep.id) continue; // big meanie
+
+      let mod = mods.find((mod) => mod.id === dep.id);
+      if (dep.downloadUrl && mod == null) {
+        const result = await fetch(dep.downloadUrl);
+        mod = await parseMod(dep.id + ".js", await result.text());
+        if (!mod || mod.type !== "library") continue;
+        await saveMod(mod);
       }
 
-      const result = await fetch(dep.downloadUrl);
-      const parsedMod = await parseMod(dep.id + ".js", await result.text());
-      if (!parsedMod || parsedMod.type !== "library") continue;
-      await saveMod(parsedMod);
+      if (mod == null) continue;
+
+      if (mod.needsRefresh) fields.needsRefresh = "true"; // force mods whose dependencies need refreshes to propogate that.
     }
   }
 
