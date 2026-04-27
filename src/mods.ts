@@ -48,8 +48,8 @@ const parseDeps = (text: string): Dependency[] => {
   return text.split(",").map((dep) => dep.trim()).map((dep) =>
     dep.includes(";")
       ? {
-        id: dep.split(";", 1)[0]!.trim(),
-        downloadUrl: dep.split(";", 1)[1]!.trim(),
+        id: dep.split(";", 2)[0]!.trim(),
+        downloadUrl: dep.split(";", 2)[1]!.trim(),
       }
       : { id: dep }
   );
