@@ -1,9 +1,17 @@
 #!/usr/bin/env bun
 
-import { cp } from "node:fs/promises";
+import { createWriteStream } from "node:fs";
+import { cp, rm } from "node:fs/promises";
 import sharp from "sharp";
+import archiver from "archiver";
+
+const shouldZip = Bun.argv.includes("--zip");
 
 (async () => {
+  try {
+    await rm("./dist", { recursive: true, force: true });
+  } catch (e) {}
+
   const result = await Bun.build({
     entrypoints: ["./src/index.ts", "./src/bridge.ts"],
     outdir: "./dist",
@@ -36,6 +44,15 @@ import sharp from "sharp";
       }).toFile(`./dist/assets/icon${size}.png`)
     ),
   );
+
+  if (shouldZip) {
+    const output = createWriteStream("./dist/calcite.zip");
+    const archive = archiver("zip", { zlib: { level: 9 } });
+
+    archive.pipe(output);
+    archive.directory("./dist", false);
+    await archive.finalize();
+  }
 
   console.log("Build complete!");
 })();
