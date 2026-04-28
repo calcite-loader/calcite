@@ -255,7 +255,10 @@ export const executeMod = async (mod: ModData) => {
     if (dep.id in loadedLibs) continue;
 
     const lib = mods.find((mod) => mod.id === dep.id);
-    if (!lib) continue;
+    if (!lib) {
+      console.error(`Missing dependency for '${mod.id}': ${dep.id}`);
+      return;
+    }
     loadedLibs[dep.id] = await executeMod(lib);
   }
 
