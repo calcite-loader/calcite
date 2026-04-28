@@ -262,6 +262,8 @@ export const executeMod = async (mod: ModData) => {
     loadedLibs[dep.id] = await executeMod(lib);
   }
 
+  loadedMods.push(mod.id);
+
   const api = {
     onLoad: (cb: () => void) => {
       if (gdLoaded) cb();
