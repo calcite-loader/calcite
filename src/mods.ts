@@ -244,6 +244,10 @@ declare global {
 window.gdApis = {};
 
 export const executeMod = async (mod: ModData) => {
+  if (mod.type === "library" && loadedLibs[mod.id]) {
+    return loadedLibs[mod.id];
+  }
+
   console.log("Injecting Mod: " + mod.name);
 
   const mods = await getMods();
