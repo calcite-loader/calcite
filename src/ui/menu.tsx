@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "preact/hooks";
-import styles from "./menu.css" with { type: "text" };
+import "./menu.css";
 import {
   disableMod,
   enableMod,
@@ -79,10 +79,6 @@ export const Menu = () => {
   const [mods, setMods] = useState<ModData[]>([]);
 
   useEffect(() => {
-    const styleElem = document.createElement("style");
-    styleElem.textContent = styles;
-    document.head.appendChild(styleElem);
-
     openMenuInternal = () => {
       if (dialogRef.current) dialogRef.current.showModal();
     };

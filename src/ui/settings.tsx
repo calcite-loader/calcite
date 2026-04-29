@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "preact/hooks";
-import styles from "./settings.css" with { type: "text" };
+import "./settings.css";
 import { type ModData, modSettingsMap, setHotkey, setSetting } from "../mods";
 import { modHotkeysMap } from "../hotkeys";
 import type { Hotkey, ModSetting } from "@calcite-loader/types";
@@ -89,10 +89,6 @@ export const Settings = (
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
-    const styleElem = document.createElement("style");
-    styleElem.textContent = styles;
-    document.head.appendChild(styleElem);
-
     openMenuInternal = () => {
       if (dialogRef.current) dialogRef.current.showModal();
     };

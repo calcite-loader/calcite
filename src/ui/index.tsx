@@ -2,7 +2,7 @@ import { render } from "preact";
 import { Menu } from "./menu";
 import { OfficialMods } from "./officialMods";
 import { ErrorDialog } from "./error";
-import styles from "./index.css" with { type: "text" };
+import "./index.css";
 
 const Index = () => {
   return (
@@ -28,9 +28,5 @@ export const initErrorDialog = () => {
     container.classList.add("calcite-container");
     document.body.appendChild(container);
     render(<ErrorDialog />, container);
-
-    const styleElem = document.createElement("style");
-    styleElem.textContent = styles;
-    document.head.appendChild(styleElem);
   });
 };

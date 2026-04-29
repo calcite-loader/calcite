@@ -4,6 +4,55 @@ import { createWriteStream } from "node:fs";
 import { cp, rm } from "node:fs/promises";
 import sharp from "sharp";
 import archiver from "archiver";
+import { browserslistToTargets, transform } from "lightningcss";
+import browserslist from "browserslist";
+import type { BunPlugin } from "bun";
+
+const cssPlugin: BunPlugin = {
+  name: "css-injector",
+  setup: (build) => {
+    build.onLoad({ filter: /\.css$/ }, async (args) => {
+      const raw = await Bun.file(args.path).bytes();
+
+      const { code } = transform({
+        filename: args.path,
+        code: raw,
+        minify: true,
+        targets: browserslistToTargets(browserslist("defaults")),
+      });
+
+      const elementId = "css-" +
+        Bun.hash(args.path).toString(16).substring(0, 8);
+      const contents = `
+(function () {
+  const inject = () => {
+    if (document.getElementById("${elementId}")) return;
+    const style = document.createElement('style');
+    style.id = "${elementId}";
+    style.textContent = ${JSON.stringify(code.toString())};
+    document.head.appendChild(style);
+  };
+
+  if (document.head) inject();
+  else {
+    const observer = new MutationObserver(() => {
+      if (document.head) {
+        inject();
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.documentElement, { childList: true });
+  }
+})()
+`;
+
+      return {
+        contents,
+        loader: "js",
+      };
+    });
+  },
+};
 
 const shouldZip = Bun.argv.includes("--zip");
 
@@ -17,6 +66,7 @@ const shouldZip = Bun.argv.includes("--zip");
     outdir: "./dist",
     naming: "[name].js",
     minify: true,
+    plugins: [cssPlugin],
   });
 
   if (!result.success) {
