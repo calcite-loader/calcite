@@ -1,7 +1,7 @@
 import * as Phaser from "phaser";
 import { injectMenuButton } from "./menuButton";
 
-import { initMenu } from "./ui";
+import { initErrorDialog, initMenu } from "./ui";
 import { hasLoaded, loadMods, modInitCallbacks } from "./mods";
 import { initPatcher } from "./patcher";
 import { registerHooks } from "./hooks";
@@ -10,6 +10,7 @@ import { initUtils } from "./utils";
 
 initUtils();
 initPatcher();
+initErrorDialog();
 
 const executeHook = () => {
   loadMods();

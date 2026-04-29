@@ -7,6 +7,7 @@ import {
   patchScript,
 } from "./patcher";
 import type { Api, Hotkey, ModSetting } from "@calcite-loader/types";
+import { reportError } from "./ui/error";
 
 interface Dependency {
   id: string;
@@ -260,6 +261,10 @@ export const executeMod = async (mod: ModData) => {
       return;
     }
     loadedLibs[dep.id] = await executeMod(lib);
+    if (!loadedLibs[dep.id]) {
+      console.error(`Dependency '${dep.id}' for '${mod.id}' failed to load.`);
+      return;
+    }
   }
 
   loadedMods.push(mod.id);
@@ -277,7 +282,9 @@ export const executeMod = async (mod: ModData) => {
     onDeath: createEventCallback("death"),
     onSpawn: createEventCallback("spawn"),
     onUpdate: createEventCallback("update"),
-    patchMethod,
+    patchMethod: (method: string, modifier: (code: string) => string) => {
+      patchMethod(method, modifier, mod);
+    },
     patchScript,
     createPatchedMethod: (
       method: Function,
@@ -334,9 +341,14 @@ export const executeMod = async (mod: ModData) => {
   } as unknown as Api;
 
   if (mod.type === "mod") {
-    const runner = new Function("api", mod.code);
-    runner(api);
-    return;
+    try {
+      const runner = new Function("api", mod.code);
+      runner(api);
+    } catch (e) {
+      reportError(`Error while running ${mod.name} (${mod.id}): ${e}`, [mod]);
+    } finally {
+      return;
+    }
   }
 
   window.gdApis[mod.id] = api;
@@ -351,6 +363,8 @@ export const executeMod = async (mod: ModData) => {
 
   try {
     return await import(url);
+  } catch (e) {
+    reportError(`Error while running ${mod.name} (${mod.id}): ${e}`, [mod]);
   } finally {
     URL.revokeObjectURL(url);
     delete window.gdApis[mod.id];

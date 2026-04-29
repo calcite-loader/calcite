@@ -1,4 +1,5 @@
-import { onModsLoaded } from "./mods";
+import { type ModData, onModsLoaded } from "./mods";
+import { reportError } from "./ui/error";
 
 interface Hook {
   target: string;
@@ -8,10 +9,17 @@ interface Hook {
 const methodHooks: Hook[] = [];
 const scriptHooks: Hook[] = [];
 
+const patchedMethods: Record<string, ModData[]> = {};
+
 export const patchMethod = (
   method: string,
   modifier: (code: string) => string,
+  mod?: ModData,
 ) => {
+  if (mod) {
+    if (!patchedMethods[method]) patchedMethods[method] = [];
+    patchedMethods[method].push(mod);
+  }
   methodHooks.push({ target: method, modifier });
 };
 
@@ -179,13 +187,35 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
     const originalCode = extractMethodAt(code, match.index);
     if (!originalCode) continue;
 
-    code = code.replace(originalCode, hook.modifier(originalCode));
+    const modifiedCode = hook.modifier(originalCode);
+
+    const firstBraceIndex = modifiedCode.indexOf("{");
+    if (firstBraceIndex === -1) continue;
+
+    const codeBody = modifiedCode.slice(
+      firstBraceIndex + 1,
+      modifiedCode.lastIndexOf("}"),
+    );
+
+    const signature = modifiedCode.slice(0, firstBraceIndex + 1);
+
+    code = code.replace(
+      originalCode,
+      `${signature} try { ${codeBody} } catch (e) { window.dispatchEvent(new CustomEvent("calcite-patch-error", { detail: { script: "${
+        originalSrc.split("/").at(-1)
+      }", method: "${hook.target}", error: e } })) } }`,
+    );
   }
 
   for (const hook of scriptHooks) {
     if (originalSrc.split("/").at(-1) != hook.target) continue;
     code = hook.modifier(code);
   }
+
+  code =
+    `try { ${code} } catch (e) { window.dispatchEvent(new CustomEvent("calcite-patch-error", { detail: { script: "${
+      originalSrc.split("/").at(-1)
+    }", error: e } })) }`;
 
   const patchedScript = document.createElement("script");
 
@@ -201,6 +231,8 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
   patchedScript.dataset.patched = "true";
   document.documentElement.appendChild(patchedScript);
 };
+
+const ignoredErrors = new Set<string>();
 
 export const initPatcher = () => {
   const observer = new MutationObserver((mutations) => {
@@ -218,5 +250,45 @@ export const initPatcher = () => {
   observer.observe(document.documentElement, {
     childList: true,
     subtree: true,
+  });
+
+  window.addEventListener("error", (e) => {
+    if (e.filename !== "" && !e.error) return;
+    reportError(
+      `${e.message}, at ${e.lineno}:${e.colno}`,
+      [],
+      true,
+    );
+  });
+
+  window.addEventListener("calcite-patch-error", (e: any) => {
+    const data: {
+      script: string;
+      method?: string;
+      error: Error;
+    } = e.detail;
+
+    const errorKey = `${data.script}-${
+      data.method || "global"
+    }-${data.error.message}`;
+
+    if (ignoredErrors.has(errorKey)) return;
+
+    const errorMessage = `${data.error.name}: ${data.error.message}${
+      ("lineNumber" in data.error && "columnNumber" in data.error)
+        ? ` at ${data.error.lineNumber}:${data.error.columnNumber}`
+        : ""
+    }`;
+
+    if (data.method && patchedMethods[data.method]) {
+      reportError(
+        `${errorMessage} in ${data.method}`,
+        patchedMethods[data.method],
+        true,
+        () => ignoredErrors.add(errorKey),
+      );
+      return;
+    }
+    reportError(errorMessage, [], true, () => ignoredErrors.add(errorKey));
   });
 };

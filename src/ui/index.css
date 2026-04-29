@@ -1,8 +1,8 @@
-#calcite-container {
+.calcite-container {
   --accent: #26e;
 }
 
-#calcite-container dialog {
+.calcite-container dialog {
   & * {
     font-family: Arial, Helvetica, sans-serif;
     box-sizing: border-box;
@@ -40,6 +40,11 @@
       top: 0;
       right: 0;
     }
+  }
+
+  & footer {
+    display: flex;
+    gap: 0.5rem;
   }
 
   .right button, header button {
