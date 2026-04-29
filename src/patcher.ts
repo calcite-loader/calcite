@@ -178,6 +178,7 @@ const getDeobfuscateMap = async (
     worker.onerror = (err) => {
       console.error("Deobfuscation worker crashed:", err);
       worker.terminate();
+      resolved = true;
       resolve({});
     };
 
