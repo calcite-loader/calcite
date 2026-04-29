@@ -64,6 +64,7 @@ const executeHook = () => {
                           setTimeout(() => {
                             initHotkeys();
                             hasLoaded();
+                            initMenu();
                             injectMenuButton();
                             modInitCallbacks.forEach((cb) => cb());
 
@@ -98,4 +99,3 @@ const executeHook = () => {
 };
 
 executeHook();
-initMenu();

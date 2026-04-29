@@ -65,6 +65,12 @@ export const initHotkeys = () => {
   });
 };
 
+const getHotkey = (mod: ModData, hotkeyId: string) => {
+  if (mod.hotkeys[hotkeyId]) return mod.hotkeys[hotkeyId];
+  const hotkeyDefault = modHotkeysMap[mod.id]?.[hotkeyId]?.default;
+  return typeof hotkeyDefault === "string" ? [hotkeyDefault] : hotkeyDefault;
+};
+
 export const isHotkeyDown = (mod: ModData, hotkeyId: string): boolean => {
-  return mod.hotkeys[hotkeyId]!.every((key) => pressedKeys.has(key));
+  return getHotkey(mod, hotkeyId)!.every((key) => pressedKeys.has(key));
 };

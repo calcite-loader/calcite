@@ -14,6 +14,7 @@ import {
 import { getAssetUrl } from "../assets";
 import { Settings } from "./settings";
 import { openOfficialMods } from "./officialMods";
+import { modHotkeysMap } from "../hotkeys";
 
 let openMenuInternal: () => void;
 
@@ -46,11 +47,14 @@ const ModItem = (props: {
         {props.mod.name}
       </label>
       <div className="right">
-        {props.mod.enabled && modSettingsMap[props.mod.id] != null && (
-          <button onClick={() => setShowSettings(true)}>
-            ⚙️
-          </button>
-        )}
+        {props.mod.enabled &&
+          (modSettingsMap[props.mod.id] != null ||
+            modHotkeysMap[props.mod.id] != null) &&
+          (
+            <button onClick={() => setShowSettings(true)}>
+              ⚙️
+            </button>
+          )}
         <button onClick={() => props.onRemove(props.mod)}>
           🗙
         </button>

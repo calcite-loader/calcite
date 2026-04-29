@@ -12,14 +12,13 @@ const Index = () => {
   );
 };
 
-export const initMenu = () =>
-  document.addEventListener("DOMContentLoaded", () => {
-    const container = document.createElement("div");
-    container.id = "calcite-container";
-    document.body.appendChild(container);
-    render(<Index />, container);
+export const initMenu = () => {
+  const container = document.createElement("div");
+  container.id = "calcite-container";
+  document.body.appendChild(container);
+  render(<Index />, container);
 
-    const styleElem = document.createElement("style");
-    styleElem.textContent = styles;
-    document.head.appendChild(styleElem);
-  });
+  const styleElem = document.createElement("style");
+  styleElem.textContent = styles;
+  document.head.appendChild(styleElem);
+};

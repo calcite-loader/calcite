@@ -112,7 +112,7 @@ export const Settings = (
     }
   };
 
-  const settings = modSettingsMap[props.mod.id] as Record<string, ModSetting>;
+  const settings = modSettingsMap[props.mod.id] ?? {};
   const hotkeys = modHotkeysMap[props.mod.id] ?? {};
 
   const HotkeyRow = ({
@@ -211,18 +211,20 @@ export const Settings = (
           🗙
         </button>
       </header>
-      <ul>
-        {Object.entries(settings).map(([id, setting]) => (
-          <li key={id}>
-            <label>{setting.name}</label>
-            <SettingInput
-              setting={setting}
-              settingId={id}
-              mod={props.mod}
-            />
-          </li>
-        ))}
-      </ul>
+      {Object.entries(settings).length > 0 && (
+        <ul>
+          {Object.entries(settings).map(([id, setting]) => (
+            <li key={id}>
+              <label>{setting.name}</label>
+              <SettingInput
+                setting={setting}
+                settingId={id}
+                mod={props.mod}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
 
       {Object.entries(hotkeys).length > 0 && (
         <>
