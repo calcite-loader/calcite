@@ -87,7 +87,9 @@ const getMethodRegex = (method: string, id: number) => {
   );
 };
 
-const getDeobfuscateMap = (code: string): Record<string, number> => {
+const getDeobfuscateMap = async (
+  code: string,
+): Promise<Record<string, number>> => {
   const deobfMatch = code.match(/var\s+_0x[\da-f]+\s*=\s*(_0x[\da-f]+)/);
   if (!deobfMatch || !deobfMatch[1]) {
     console.error("Failed to find name of debobfuscator function.");
@@ -121,38 +123,73 @@ const getDeobfuscateMap = (code: string): Record<string, number> => {
     ),
   )?.[0];
 
-  const deobfuscateMap: Record<string, number> = {};
-
-  try {
-    const sandbox = `(function() {
-      ${arraySource}
-      ${deobfSource}
-      ${rotationSource}
+  const workerCode = `
+    onmessage = function(e) {
+      const { arraySource, deobfSource, rotationSource, arrayName, deobfName, offset } = e.data;
       
-      const map = {};
-      const finalArray = ${arrayMatch[1]}();
-      
-      for (let i = 0; i < finalArray.length; i++) {
-        try {
-          const val = ${deobfMatch[1]}(i + ${offset});
-          if (val && typeof val === 'string') {
-            map[val] = i + ${offset};
-          }
-        } catch(e) {}
+      try {
+        // Fucking magic
+        (0, eval)(arraySource);
+        (0, eval)(deobfSource);
+        (0, eval)(rotationSource);
+        
+        const map = {};
+        const finalArray = self[arrayName]();
+        
+        for (let i = 0; i < finalArray.length; i++) {
+          try {
+            const val = self[deobfName](i + offset);
+            if (val && typeof val === 'string') {
+              map[val] = i + offset;
+            }
+          } catch(e) {}
+        }
+        postMessage({ success: true, map });
+      } catch (err) {
+        postMessage({ success: false, error: err.message });
       }
-      return map;
-    })()`;
+    };
+  `;
 
-    const resultMap = eval(sandbox);
-    Object.assign(deobfuscateMap, resultMap);
-  } catch (e) {
-    console.error(
-      "Patcher: Sandbox failed.",
-      e,
-    );
-  }
+  return new Promise((resolve) => {
+    const blob = new Blob([workerCode], { type: "application/javascript" });
+    const worker = new Worker(URL.createObjectURL(blob));
+    let resolved = false;
 
-  return deobfuscateMap;
+    const timeout = setTimeout(() => {
+      if (!resolved) {
+        console.error("Deobfuscation worker timed out.");
+        worker.terminate();
+        resolve({});
+      }
+    }, 4000);
+
+    worker.onmessage = (e) => {
+      resolved = true;
+      clearTimeout(timeout);
+      worker.terminate();
+      if (e.data.success) resolve(e.data.map);
+      else {
+        console.error("Deobfuscation worker execution error:", e.data.error);
+        resolve({});
+      }
+    };
+
+    worker.onerror = (err) => {
+      console.error("Deobfuscation worker crashed:", err);
+      worker.terminate();
+      resolve({});
+    };
+
+    worker.postMessage({
+      arraySource,
+      deobfSource,
+      rotationSource,
+      arrayName: arrayMatch[1],
+      deobfName: deobfMatch[1],
+      offset,
+    });
+  });
 };
 
 export let mainDeobfuscateMap: Record<string, number> = {};
@@ -171,7 +208,7 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
   const response = await fetch(originalSrc);
   let code = await response.text();
 
-  const deobfuscateMap = getDeobfuscateMap(code);
+  const deobfuscateMap = await getDeobfuscateMap(code);
   if (originalSrc.split("/").at(-1) === "index-game.js") {
     mainDeobfuscateMap = deobfuscateMap;
   }
