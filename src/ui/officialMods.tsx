@@ -24,6 +24,21 @@ const installMod = async (mod: ManifestItem) => {
   }
 };
 
+// From Remix Icon
+const DownloadIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+  >
+    <path
+      fill="#fff"
+      d="M3 19h18v2H3zm10-5.828L19.071 7.1l1.414 1.414L12 17L3.515 8.515L4.929 7.1L11 13.173V2h2z"
+    />
+  </svg>
+);
+
 const ModItem = (
   props: {
     mod: ManifestItem;
@@ -36,7 +51,7 @@ const ModItem = (
       </span>
       <div className="right">
         <button onClick={() => installMod(props.mod)}>
-          ↓
+          <DownloadIcon />
         </button>
       </div>
     </div>
@@ -67,9 +82,7 @@ export const OfficialMods = () => {
     <dialog ref={dialogRef} className="official-mods">
       <header>
         <h3>Official Mods</h3>
-        <button onClick={() => window.location.reload()}>
-          🗙
-        </button>
+        <button onClick={() => window.location.reload()} />
       </header>
       <ul>
         {mods.map((mod) => (

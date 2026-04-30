@@ -72,6 +72,7 @@ const ModItem = (props: {
 
 export const Menu = () => {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [logoUrl, setLogoUrl] = useState("");
 
@@ -123,6 +124,10 @@ export const Menu = () => {
     reader.readAsText(file);
   };
 
+  const triggerUpload = () => {
+    fileInputRef.current?.click();
+  };
+
   const handleRemoveMod = async (mod: ModData) => {
     await removeMod(mod);
     setMods(mods.filter((i) => i != mod));
@@ -153,12 +158,19 @@ export const Menu = () => {
     <dialog ref={dialogRef} className="main">
       <header>
         <img src={logoUrl} alt="Calcite" />
-        <button onClick={handleClose}>
-          🗙
-        </button>
+        <button onClick={handleClose} />
       </header>
-      <input type="file" accept=".js" onChange={handleUpload} />
-      <button onClick={openOfficialMods}>Official Mods</button>
+      <input
+        type="file"
+        ref={fileInputRef}
+        hidden="hidden"
+        accept=".js"
+        onChange={handleUpload}
+      />
+      <div className="buttons">
+        <button onClick={triggerUpload}>Upload Mod</button>
+        <button onClick={openOfficialMods}>Official Mods</button>
+      </div>
       {mods.length > 0 && (
         <fieldset>
           {mods.map((mod) => (

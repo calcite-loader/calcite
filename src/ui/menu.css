@@ -1,18 +1,65 @@
-#calcite-container dialog.main fieldset {
-  border: none;
+#calcite-container dialog.main {
+  .buttons {
+    display: flex;
+    gap: 1rem;
+  }
 
-  div {
-    position: relative;
+  fieldset {
+    border: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 
-    label {
-      display: flex;
-      gap: 0.5rem;
-    }
+    div {
+      position: relative;
 
-    .right {
-      position: absolute;
-      top: 0;
-      right: 0;
+      &, label {
+        display: flex;
+        align-items: center;
+      }
+
+      input[type="checkbox"] {
+        appearance: none;
+        margin: 0;
+
+        font: inherit;
+        width: 1.25rem;
+        aspect-ratio: 1;
+        border: 3px solid #fff;
+        border-radius: 6px;
+
+        display: grid;
+        place-content: center;
+
+        &::before {
+          content: "";
+          width: 0.6rem;
+          height: 0.6rem;
+          border-radius: 2px;
+          scale: 0;
+          transition: 100ms scale ease-in-out;
+          background-color: var(--accent);
+        }
+
+        &:checked::before {
+          scale: 1;
+        }
+      }
+
+      label {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .right {
+        position: absolute;
+        top: 0;
+        right: 0;
+
+        button {
+          filter: brightness(100);
+        }
+      }
     }
   }
 }

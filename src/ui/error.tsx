@@ -57,7 +57,7 @@ export const ErrorDialog = () => {
     <dialog ref={dialogRef}>
       <header>
         <h3>Oops :(</h3>
-        <button onClick={() => dialogRef.current?.close()}>🗙</button>
+        <button onClick={() => dialogRef.current?.close()} />
       </header>
       <p>{error?.message}</p>
       {error?.mods.length! > 1 && (

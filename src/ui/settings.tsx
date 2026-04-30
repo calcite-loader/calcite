@@ -203,9 +203,7 @@ export const Settings = (
     <dialog ref={dialogRef} className="settings">
       <header>
         <h3>Settings</h3>
-        <button onClick={handleClose}>
-          🗙
-        </button>
+        <button onClick={handleClose} />
       </header>
       {Object.entries(settings).length > 0 && (
         <ul>
