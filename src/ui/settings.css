@@ -76,6 +76,10 @@
     &[type="color"] {
       padding: 0.25rem;
       cursor: pointer;
+
+      &::-webkit-color-swatch, &::-moz-color-swatch {
+        border-radius: 0.8rem;
+      }
     }
   }
 
