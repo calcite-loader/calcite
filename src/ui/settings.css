@@ -1,16 +1,16 @@
 #calcite-container dialog.settings {
   padding: 1rem;
 
-  & header {
+  header {
     min-width: 25rem;
     padding-top: 0.5rem;
   }
 
-  & h4 {
+  h4 {
     margin-left: 1rem;
   }
 
-  & ul {
+  ul {
     list-style: none;
     padding: 1rem;
     margin: 0;
@@ -18,7 +18,7 @@
     overflow-y: auto;
   }
 
-  & li {
+  li {
     margin-bottom: 1.5rem;
     display: flex;
     flex-direction: column;
@@ -29,7 +29,7 @@
     }
 
     &:has(input[type="color"]) {
-      & label {
+      label {
         height: max-content;
       }
 
@@ -43,7 +43,7 @@
       align-items: center;
       position: relative;
 
-      & > div {
+      > div {
         display: flex;
         gap: 0.5rem;
         align-items: center;
@@ -51,13 +51,13 @@
         right: 0;
       }
 
-      & .hotkey-display {
+      .hotkey-display {
         font-size: 0.75rem;
       }
     }
   }
 
-  & input[type="text"], & input[type="color"], & input[type="number"] {
+  input[type="text"], & input[type="color"], & input[type="number"] {
     padding: 0.5rem 0.75rem;
     border: 2px solid #ccc;
     border-radius: 0.25rem;
@@ -74,13 +74,13 @@
     }
   }
 
-  & .slider-container {
+  .slider-container {
     display: flex;
     align-items: center;
     gap: 0.75rem;
   }
 
-  & .setting-slider {
+  .setting-slider {
     flex: 1;
     height: 5px;
     border-radius: 5px;
@@ -109,23 +109,23 @@
     }
   }
 
-  & .slider-value {
+  .slider-value {
     min-width: 3rem;
     text-align: right;
   }
 
-  & .toggle-container {
+  .toggle-container {
     display: flex;
     align-items: center;
     cursor: pointer;
     width: fit-content;
   }
 
-  & .setting-toggle {
+  .setting-toggle {
     display: none;
   }
 
-  & .toggle-switch {
+  .toggle-switch {
     width: 2.5rem;
     height: 1.5rem;
     background-color: #ddd;
@@ -147,7 +147,7 @@
     }
   }
 
-  & .setting-toggle:checked + .toggle-switch {
+  .setting-toggle:checked + .toggle-switch {
     background-color: var(--accent);
 
     &::before {

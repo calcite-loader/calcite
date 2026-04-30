@@ -1,22 +1,22 @@
 #calcite-container dialog.official-mods {
-  & header {
+  header {
     min-width: 25rem;
   }
 
-  & ul {
+  ul {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 
-    & div {
+    div {
       position: relative;
 
-      & span {
+      span {
         display: flex;
         gap: 0.5rem;
       }
 
-      & .right {
+      .right {
         position: absolute;
         top: 0;
         right: 0;

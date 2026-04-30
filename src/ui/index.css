@@ -3,7 +3,7 @@
 }
 
 .calcite-container dialog {
-  & * {
+  * {
     font-family: Arial, Helvetica, sans-serif;
     box-sizing: border-box;
     margin: 0;
@@ -23,7 +23,7 @@
     gap: 1rem;
   }
 
-  & header {
+  header {
     display: flex;
     gap: 0.5rem;
     position: relative;
@@ -31,18 +31,18 @@
     min-width: 30rem;
     padding-bottom: 1rem;
 
-    & img {
+    img {
       max-height: 4rem;
     }
 
-    & button {
+    button {
       position: absolute;
       top: 0;
       right: 0;
     }
   }
 
-  & footer {
+  footer {
     display: flex;
     gap: 0.5rem;
   }
@@ -54,7 +54,7 @@
     cursor: pointer;
   }
 
-  & > button, & *:not(.right, header) > button {
+  > button, & *:not(.right, header) > button {
     width: max-content;
     cursor: pointer;
     border: none;

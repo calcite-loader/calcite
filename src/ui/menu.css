@@ -1,15 +1,15 @@
 #calcite-container dialog.main fieldset {
   border: none;
 
-  & div {
+  div {
     position: relative;
 
-    & label {
+    label {
       display: flex;
       gap: 0.5rem;
     }
 
-    & .right {
+    .right {
       position: absolute;
       top: 0;
       right: 0;
