@@ -38,7 +38,7 @@
           border-radius: 2px;
           scale: 0;
           transition: 100ms scale ease-in-out;
-          background-color: var(--accent);
+          background-color: #fff;
         }
 
         &:checked::before {
