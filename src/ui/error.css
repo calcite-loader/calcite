@@ -1,0 +1,6 @@
+.calcite-container dialog.error ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-left: 1.5rem;
+}

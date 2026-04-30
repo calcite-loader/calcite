@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { disableMod, getMods, type ModData } from "../mods";
+import "./error.css";
 
 export interface ErrorDetail {
   message: string;
@@ -54,7 +55,7 @@ export const ErrorDialog = () => {
   };
 
   return (
-    <dialog ref={dialogRef}>
+    <dialog ref={dialogRef} className="error">
       <header>
         <h3>Oops :(</h3>
         <button onClick={() => dialogRef.current?.close()} />
@@ -64,7 +65,7 @@ export const ErrorDialog = () => {
         <>
           <h4>The Following Mods Could've Been Involved:</h4>
           <ul>
-            {error?.mods.map((mod) => <ul>{mod.name}</ul>)}
+            {error?.mods.map((mod) => <li>{mod.name}</li>)}
           </ul>
         </>
       )}

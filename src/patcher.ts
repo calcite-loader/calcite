@@ -1,4 +1,4 @@
-import { type ModData, onModsLoaded } from "./mods";
+import { getMods, type ModData, onModsLoaded } from "./mods";
 import { reportError } from "./ui/error";
 
 interface Hook {
@@ -299,12 +299,16 @@ export const initPatcher = () => {
     );
   });
 
-  window.addEventListener("calcite-patch-error", (e: any) => {
+  window.addEventListener("calcite-patch-error", async (e: any) => {
     const data: {
       script: string;
       method?: string;
-      error: Error;
+      error: Error | string;
     } = e.detail;
+
+    if (typeof data.error === "string") {
+      data.error = new Error(data.error);
+    }
 
     const errorKey = `${data.script}-${
       data.method || "global"
@@ -319,9 +323,23 @@ export const initPatcher = () => {
     }`;
 
     if (data.method && patchedMethods[data.method]) {
+      const possibleMods = new Set<ModData>();
+
+      const mods = await getMods();
+      for (const mod of patchedMethods[data.method] ?? []) {
+        if (mod.type === "mod") {
+          possibleMods.add(mod);
+          continue;
+        }
+        mods.filter((possibleDependent) =>
+          possibleDependent.type === "mod" &&
+          possibleDependent.deps.find((dep) => dep.id === mod.id)
+        ).forEach((dependent) => possibleMods.add(dependent));
+      }
+
       reportError(
         `${errorMessage} in ${data.method}`,
-        patchedMethods[data.method],
+        Array.from(possibleMods),
         true,
         () => ignoredErrors.add(errorKey),
       );
