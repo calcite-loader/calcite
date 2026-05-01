@@ -75,7 +75,7 @@ export const parseMod = async (
       if (dep.downloadUrl && mod == null) {
         const result = await fetch(dep.downloadUrl);
         mod = await parseMod(dep.id + ".js", await result.text());
-        if (!mod || mod.type !== "library") continue;
+        if (!mod) continue;
         await saveMod(mod);
       }
 
@@ -247,7 +247,7 @@ window.gdApis = {};
 export const executeMod = async (mod: ModData) => {
   if (mod.type === "library" && loadedLibs[mod.id]) {
     return loadedLibs[mod.id];
-  }
+  } else if (loadedMods.includes(mod.id)) return;
 
   console.log("Injecting Mod: " + mod.name);
 
@@ -255,15 +255,20 @@ export const executeMod = async (mod: ModData) => {
   for (const dep of mod.deps) {
     if (dep.id in loadedLibs) continue;
 
-    const lib = mods.find((mod) => mod.id === dep.id);
-    if (!lib) {
+    const depMod = mods.find((mod) => mod.id === dep.id);
+    if (!depMod) {
       console.error(`Missing dependency for '${mod.id}': ${dep.id}`);
       return;
     }
-    loadedLibs[dep.id] = await executeMod(lib);
-    if (!loadedLibs[dep.id]) {
-      console.error(`Dependency '${dep.id}' for '${mod.id}' failed to load.`);
-      return;
+
+    if (depMod.type === "library") {
+      loadedLibs[dep.id] = await executeMod(depMod);
+      if (!loadedLibs[dep.id]) {
+        console.error(`Dependency '${dep.id}' for '${mod.id}' failed to load.`);
+        return;
+      }
+    } else if (!loadedMods.includes(dep.id)) {
+      await executeMod(depMod);
     }
   }
 
