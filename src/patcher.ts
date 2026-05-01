@@ -2,6 +2,7 @@ import { getMods, type ModData, onModsLoaded } from "./mods";
 import { reportError } from "./ui/error";
 
 interface Hook {
+  mod?: ModData;
   target: string;
   modifier: (code: string) => string;
 }
@@ -20,7 +21,7 @@ export const patchMethod = (
     if (!patchedMethods[method]) patchedMethods[method] = [];
     patchedMethods[method].push(mod);
   }
-  methodHooks.push({ target: method, modifier });
+  methodHooks.push({ target: method, modifier, mod });
 };
 
 export const patchScript = (
@@ -195,6 +196,20 @@ const getDeobfuscateMap = async (
 
 export let mainDeobfuscateMap: Record<string, number> = {};
 
+export interface MethodPatch {
+  method: string;
+  mod: ModData;
+  before: string;
+  after: string;
+}
+
+declare global {
+  interface Window {
+    _calciteMethodPatches: MethodPatch[];
+  }
+}
+window._calciteMethodPatches = window._calciteMethodPatches ?? [];
+
 const interceptScript = async (scriptNode: HTMLScriptElement) => {
   const originalSrc = scriptNode.src;
   const isModule = scriptNode.type === "module";
@@ -214,6 +229,8 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
     mainDeobfuscateMap = deobfuscateMap;
   }
 
+  const methodPatches: MethodPatch[] = [];
+
   for (const hook of methodHooks) {
     const id = deobfuscateMap[hook.target];
 
@@ -226,6 +243,15 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
     if (!originalCode) continue;
 
     const modifiedCode = hook.modifier(originalCode);
+
+    if (hook.mod) {
+      methodPatches.push({
+        method: hook.target,
+        mod: hook.mod,
+        before: originalCode,
+        after: modifiedCode,
+      });
+    }
 
     const firstBraceIndex = modifiedCode.indexOf("{");
     if (firstBraceIndex === -1) continue;
@@ -268,6 +294,15 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
   patchedScript.textContent = code;
   patchedScript.dataset.patched = "true";
   document.documentElement.appendChild(patchedScript);
+
+  window._calciteMethodPatches.push(...methodPatches);
+  window.postMessage({
+    type: "DEVTOOLS",
+    payload: {
+      type: "METHOD_PATCHES",
+      data: methodPatches,
+    },
+  }, "*");
 };
 
 const ignoredErrors = new Set<string>();

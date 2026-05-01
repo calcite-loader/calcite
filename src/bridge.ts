@@ -80,4 +80,8 @@ window.addEventListener("message", async (e) => {
       url: url,
     }, "*");
   }
+
+  if (e.data.type == "DEVTOOLS") {
+    (api.runtime.sendMessage as (message: any) => void)(e.data.payload);
+  }
 });

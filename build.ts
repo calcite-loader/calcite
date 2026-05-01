@@ -62,11 +62,17 @@ const shouldZip = Bun.argv.includes("--zip");
   } catch (e) {}
 
   const result = await Bun.build({
-    entrypoints: ["./src/index.ts", "./src/bridge.ts"],
+    entrypoints: [
+      "./src/index.ts",
+      "./src/bridge.ts",
+      "./src/background.ts",
+      "./src/devtools/devtools.html",
+      "./src/devtools/panel.html",
+    ],
     outdir: "./dist",
-    naming: "[name].js",
     minify: true,
     plugins: [cssPlugin],
+    target: "browser",
   });
 
   if (!result.success) {
@@ -75,7 +81,9 @@ const shouldZip = Bun.argv.includes("--zip");
   }
 
   // Copy Manifest
-  await Bun.write("./dist/manifest.json", Bun.file("./manifest.json"));
+  const manifest = await Bun.file("./manifest.json").json();
+  delete manifest["$schema"];
+  await Bun.write("./dist/manifest.json", JSON.stringify(manifest));
 
   // Copy Assets
   try {

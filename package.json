@@ -19,6 +19,7 @@
     "sharp": "^0.34.5"
   },
   "dependencies": {
+    "diff": "^9.0.0",
     "phaser": "~3.90.0",
     "preact": "^10.29.1"
   }

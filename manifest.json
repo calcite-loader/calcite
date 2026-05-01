@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/chrome-manifest",
   "manifest_version": 3,
   "name": "Calcite",
   "version": "0.18.0",
@@ -53,5 +54,10 @@
       "all_frames": true,
       "world": "MAIN"
     }
-  ]
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "type": "module"
+  },
+  "devtools_page": "/devtools/devtools.html"
 }
