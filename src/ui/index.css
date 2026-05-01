@@ -13,9 +13,11 @@
 .calcite-container dialog {
   * {
     font-family: Pusab, Arial, Helvetica, sans-serif;
+    text-shadow: 0 4px rgba(0, 0, 0, 0.2);
+    color: #fff;
+    -webkit-text-stroke: 1px #000;
     box-sizing: border-box;
     margin: 0;
-    color: #fff;
   }
 
   border: none;
@@ -108,6 +110,5 @@
     padding: 0.75rem 1rem;
     border-radius: 1rem;
     font-size: 1.5rem;
-    text-shadow: 0 4px rgba(0, 0, 0, 0.1);
   }
 }
