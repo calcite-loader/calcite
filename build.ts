@@ -56,6 +56,9 @@ const cssPlugin: BunPlugin = {
 
 const shouldZip = Bun.argv.includes("--zip");
 
+let buildTarget: "firefox" | "chromium" = "firefox";
+if (Bun.argv.includes("--chromium")) buildTarget = "chromium";
+
 (async () => {
   try {
     await rm("./dist", { recursive: true, force: true });
@@ -84,6 +87,10 @@ const shouldZip = Bun.argv.includes("--zip");
   // Copy Manifest
   const manifest = await Bun.file("./manifest.json").json();
   delete manifest["$schema"];
+  if (buildTarget === "firefox") {
+    manifest.background.scripts = [manifest.background.service_worker];
+    delete manifest.background.service_worker;
+  }
   await Bun.write("./dist/manifest.json", JSON.stringify(manifest));
 
   // Copy Assets
