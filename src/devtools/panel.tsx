@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { render } from "preact";
 import type { PatchInfo } from "../patcher";
-import { type Change, diffWords } from "diff";
+import { type Change } from "diff";
 import "./panel.css";
 import { memo } from "preact/compat";
 
@@ -32,12 +32,16 @@ const Patch = memo(({ patch }: { patch: PatchInfo }) => {
         <strong>{(patch.mod ?? { name: "Internal" }).name}</strong> —{" "}
         <span>{patch.target}</span>
       </div>
-      {hunks && hunks.map((hunk, i) => (
-        <div key={i} className="hunk-container">
-          {i > 0 && (
-            <div className="hunk-separator">@@ Gap in obfuscated source @@</div>
-          )}
-          <pre>
+      {!hunks
+        ? <div className="loading">Loading...</div>
+        : hunks.map((hunk, i) => (
+          <div key={i} className="hunk-container">
+            {i > 0 && (
+              <div className="hunk-separator">
+                @@ Gap in obfuscated source @@
+              </div>
+            )}
+            <pre>
             {hunk.map((part, index) => (
               <span
                 key={index}
@@ -46,9 +50,9 @@ const Patch = memo(({ patch }: { patch: PatchInfo }) => {
                 {part.value}
               </span>
             ))}
-          </pre>
-        </div>
-      ))}
+            </pre>
+          </div>
+        ))}
     </div>
   );
 });
@@ -100,7 +104,9 @@ const App = () => {
   const [showInternal, setShowInternal] = useState(false);
 
   const filteredPatches = useMemo(() => {
-    return patches.filter((p) => showInternal || p.mod);
+    return patches.map((p, i) => ({ data: p, key: i })).filter((p) =>
+      showInternal || p.data.mod
+    );
   }, [patches, showInternal]);
 
   return (
@@ -116,9 +122,15 @@ const App = () => {
         />
         Show Internal
       </label>
-      <div class="patches">
-        {filteredPatches.map((patch) => <Patch patch={patch} />)}
-      </div>
+      {filteredPatches.length === 0
+        ? <div class="missing">No patches found...</div>
+        : (
+          <div class="patches">
+            {filteredPatches.map((patch) => (
+              <Patch patch={patch.data} key={patch.key} />
+            ))}
+          </div>
+        )}
     </>
   );
 };
