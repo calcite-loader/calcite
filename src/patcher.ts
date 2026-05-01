@@ -332,6 +332,7 @@ export const initPatcher = () => {
           continue;
         }
         mods.filter((possibleDependent) =>
+          possibleDependent.enabled &&
           possibleDependent.type === "mod" &&
           possibleDependent.deps.find((dep) => dep.id === mod.id)
         ).forEach((dependent) => possibleMods.add(dependent));
