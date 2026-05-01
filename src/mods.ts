@@ -290,7 +290,9 @@ export const executeMod = async (mod: ModData) => {
     patchMethod: (method: string, modifier: (code: string) => string) => {
       patchMethod(method, modifier, mod);
     },
-    patchScript,
+    patchScript: (name: string, modifier: (code: string) => string) => {
+      patchScript(name, modifier, mod);
+    },
     createPatchedMethod: (
       method: Function,
       modifier: (code: string) => string,

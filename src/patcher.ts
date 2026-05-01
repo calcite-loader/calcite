@@ -27,8 +27,9 @@ export const patchMethod = (
 export const patchScript = (
   script: string,
   modifier: (code: string) => string,
+  mod?: ModData,
 ) => {
-  scriptHooks.push({ target: script, modifier });
+  scriptHooks.push({ target: script, modifier, mod });
 };
 
 export const extractFunction = (
@@ -196,8 +197,8 @@ const getDeobfuscateMap = async (
 
 export let mainDeobfuscateMap: Record<string, number> = {};
 
-export interface MethodPatch {
-  method: string;
+export interface PatchInfo {
+  target: string;
   mod: ModData;
   before: string;
   after: string;
@@ -205,10 +206,12 @@ export interface MethodPatch {
 
 declare global {
   interface Window {
-    _calciteMethodPatches: MethodPatch[];
+    _calciteMethodPatches: PatchInfo[];
+    _calciteScriptPatches: PatchInfo[];
   }
 }
 window._calciteMethodPatches = window._calciteMethodPatches ?? [];
+window._calciteScriptPatches = window._calciteScriptPatches ?? [];
 
 const interceptScript = async (scriptNode: HTMLScriptElement) => {
   const originalSrc = scriptNode.src;
@@ -229,7 +232,8 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
     mainDeobfuscateMap = deobfuscateMap;
   }
 
-  const methodPatches: MethodPatch[] = [];
+  const methodPatches: PatchInfo[] = [];
+  const scriptPatches: PatchInfo[] = [];
 
   for (const hook of methodHooks) {
     const id = deobfuscateMap[hook.target];
@@ -246,7 +250,7 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
 
     if (hook.mod) {
       methodPatches.push({
-        method: hook.target,
+        target: hook.target,
         mod: hook.mod,
         before: originalCode,
         after: modifiedCode,
@@ -273,7 +277,17 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
 
   for (const hook of scriptHooks) {
     if (originalSrc.split("/").at(-1) != hook.target) continue;
+    const originalCode = code;
     code = hook.modifier(code);
+
+    if (hook.mod) {
+      scriptPatches.push({
+        target: hook.target,
+        mod: hook.mod,
+        before: originalCode,
+        after: code,
+      });
+    }
   }
 
   code =
@@ -301,6 +315,15 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
     payload: {
       type: "METHOD_PATCHES",
       data: methodPatches,
+    },
+  }, "*");
+
+  window._calciteScriptPatches.push(...scriptPatches);
+  window.postMessage({
+    type: "DEVTOOLS",
+    payload: {
+      type: "SCRIPT_PATCHES",
+      data: scriptPatches,
     },
   }, "*");
 };
