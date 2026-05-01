@@ -3,75 +3,36 @@ import { render } from "preact";
 import type { PatchInfo } from "../patcher";
 import { type Change, diffWords } from "diff";
 import "./panel.css";
+import { memo } from "preact/compat";
 
 const api = typeof browser !== "undefined" ? browser : chrome;
 
-const getHunks = (
-  changes: Change[],
-  contextSize: number = 100,
-) => {
-  const hunks: Change[][] = [];
-  let currentHunkParts: Change[] = [];
-  let unchangedBuffer: Change | null = null;
+const Patch = memo(({ patch }: { patch: PatchInfo }) => {
+  const [hunks, setHunks] = useState<Change[][] | null>(null);
 
-  for (const change of changes) {
-    if (change.added || change.removed) {
-      if (unchangedBuffer) {
-        currentHunkParts.push({
-          ...unchangedBuffer,
-          value: unchangedBuffer.value.length > contextSize * 2
-            ? unchangedBuffer.value.slice(-contextSize)
-            : unchangedBuffer.value,
-        });
-        unchangedBuffer = null;
-      }
-      currentHunkParts.push(change);
-      continue;
-    }
+  useEffect(() => {
+    const worker = new Worker("/devtools/diff.worker.js");
 
-    if (currentHunkParts.length === 0) {
-      unchangedBuffer = {
-        ...change,
-        value: change.value.slice(0, contextSize),
-      };
-      continue;
-    }
+    worker.onmessage = (e) => {
+      setHunks(e.data.hunks);
+      worker.terminate();
+    };
 
-    if (change.value.length > contextSize * 2) {
-      currentHunkParts.push({
-        ...change,
-        value: change.value.slice(0, contextSize),
-      });
-      hunks.push(currentHunkParts);
-      currentHunkParts = [];
-      unchangedBuffer = {
-        ...change,
-        value: change.value.slice(-contextSize),
-      };
-      continue;
-    }
+    worker.postMessage({
+      before: patch.before,
+      after: patch.after,
+    });
 
-    currentHunkParts.push(change);
-  }
-
-  if (currentHunkParts.length > 0) {
-    hunks.push(currentHunkParts);
-  }
-  return hunks;
-};
-
-const Patch = ({ patch }: { patch: PatchInfo }) => {
-  const hunks = useMemo(() => {
-    const changes = diffWords(patch.before, patch.after);
-    return getHunks(changes);
+    return () => worker.terminate();
   }, [patch.before, patch.after]);
 
   return (
     <div className="patch">
       <div className="patch-header">
-        <strong>{patch.mod.name}</strong> — <span>{patch.target}</span>
+        <strong>{(patch.mod ?? { name: "Internal" }).name}</strong> —{" "}
+        <span>{patch.target}</span>
       </div>
-      {hunks.map((hunk, i) => (
+      {hunks && hunks.map((hunk, i) => (
         <div key={i} className="hunk-container">
           {i > 0 && (
             <div className="hunk-separator">@@ Gap in obfuscated source @@</div>
@@ -90,31 +51,24 @@ const Patch = ({ patch }: { patch: PatchInfo }) => {
       ))}
     </div>
   );
-};
+});
+
 const App = () => {
   const [patches, setPatches] = useState<PatchInfo[]>([]);
 
   useEffect(() => {
     const pullState = () => {
       api.devtools.inspectedWindow.eval(
-        "window._calciteMethodPatches",
-        (result, isException) => {
+        "({ methods: window._calciteMethodPatches ?? [], scripts: window._calciteScriptPatches ?? [] })",
+        (
+          result: { methods: PatchInfo[]; scripts: PatchInfo[] },
+          isException,
+        ) => {
           if (!isException && result) {
-            setPatches((
-              prev,
-            ) => [...prev, ...result as unknown as PatchInfo[]]);
-          } else setPatches([]);
-        },
-      );
-
-      api.devtools.inspectedWindow.eval(
-        "window._calciteScriptPatches",
-        (result, isException) => {
-          if (!isException && result) {
-            setPatches((
-              prev,
-            ) => [...prev, ...result as unknown as PatchInfo[]]);
-          } else setPatches([]);
+            setPatches([...result.methods, ...result.scripts]);
+          } else {
+            setPatches([]);
+          }
         },
       );
     };
@@ -143,11 +97,27 @@ const App = () => {
     };
   }, []);
 
+  const [showInternal, setShowInternal] = useState(false);
+
+  const filteredPatches = useMemo(() => {
+    return patches.filter((p) => showInternal || p.mod);
+  }, [patches, showInternal]);
+
   return (
     <>
       <h1>Patches</h1>
+      <label>
+        <input
+          type="checkbox"
+          checked={showInternal}
+          onChange={(e) => {
+            setShowInternal((e.target as HTMLInputElement).checked);
+          }}
+        />
+        Show Internal
+      </label>
       <div class="patches">
-        {patches.map((patch) => <Patch patch={patch} />)}
+        {filteredPatches.map((patch) => <Patch patch={patch} />)}
       </div>
     </>
   );

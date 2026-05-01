@@ -68,6 +68,7 @@ const shouldZip = Bun.argv.includes("--zip");
       "./src/background.ts",
       "./src/devtools/devtools.html",
       "./src/devtools/panel.html",
+      "./src/devtools/diff.worker.ts",
     ],
     outdir: "./dist",
     minify: true,

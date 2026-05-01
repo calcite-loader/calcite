@@ -199,7 +199,7 @@ export let mainDeobfuscateMap: Record<string, number> = {};
 
 export interface PatchInfo {
   target: string;
-  mod: ModData;
+  mod?: ModData;
   before: string;
   after: string;
 }
@@ -248,14 +248,12 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
 
     const modifiedCode = hook.modifier(originalCode);
 
-    if (hook.mod) {
-      methodPatches.push({
-        target: hook.target,
-        mod: hook.mod,
-        before: originalCode,
-        after: modifiedCode,
-      });
-    }
+    methodPatches.push({
+      target: hook.target,
+      mod: hook.mod,
+      before: originalCode,
+      after: modifiedCode,
+    });
 
     const firstBraceIndex = modifiedCode.indexOf("{");
     if (firstBraceIndex === -1) continue;
@@ -280,14 +278,12 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
     const originalCode = code;
     code = hook.modifier(code);
 
-    if (hook.mod) {
-      scriptPatches.push({
-        target: hook.target,
-        mod: hook.mod,
-        before: originalCode,
-        after: code,
-      });
-    }
+    scriptPatches.push({
+      target: hook.target,
+      mod: hook.mod,
+      before: originalCode,
+      after: code,
+    });
   }
 
   code =
