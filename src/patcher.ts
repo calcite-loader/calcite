@@ -215,12 +215,16 @@ window._calciteScriptPatches = window._calciteScriptPatches ?? [];
 
 let scriptQueue: Promise<void> = Promise.resolve();
 
+let sharedScope = "";
+let shouldShareScope = false;
+
 const interceptScript = async (scriptNode: HTMLScriptElement) => {
   const originalSrc = scriptNode.src;
   if (!originalSrc.startsWith("http")) return; // Filter out other browser extensions
 
   const originalType = scriptNode.type;
   scriptNode.type = "javascript/blocked";
+  scriptNode.src = "";
   scriptNode.addEventListener("beforescriptexecute", (e) => e.preventDefault());
   scriptNode.remove();
 
@@ -289,25 +293,43 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
       });
     }
 
-    const patchedScript = document.createElement("script");
-    if (originalType) patchedScript.type = originalType;
-    if (scriptNode.noModule) patchedScript.noModule = scriptNode.noModule;
-    if (scriptNode.defer) patchedScript.defer = scriptNode.defer;
-    if (scriptNode.async) patchedScript.async = scriptNode.async;
-
-    // You may be wondering why this is needed, the answer is I have no fucking clue.
     if (
       window.location.host === "web-dashers.github.io" &&
-      originalSrc.split("/").at(-1) === "config.js"
+      originalSrc.split("/").at(-1) === "main.js"
     ) {
-      code = code.replaceAll(/let|const/g, "var");
-    }
+      sharedScope += code;
 
-    patchedScript.src = URL.createObjectURL(
-      new Blob([code], { type: "application/javascript" }),
-    );
-    patchedScript.dataset.patched = "true";
-    document.head.appendChild(patchedScript);
+      const patchedScript = document.createElement("script");
+      patchedScript.defer = true;
+      patchedScript.type = "module";
+      patchedScript.src = URL.createObjectURL(
+        new Blob([sharedScope], { type: "application/javascript" }),
+      );
+      patchedScript.dataset.patched = "true";
+      document.head.appendChild(patchedScript);
+    } else {
+      if (shouldShareScope) sharedScope += code + ";";
+      else {
+        const patchedScript = document.createElement("script");
+        if (originalType) patchedScript.type = originalType;
+        if (scriptNode.noModule) patchedScript.noModule = scriptNode.noModule;
+        if (scriptNode.defer) patchedScript.defer = scriptNode.defer;
+        if (scriptNode.async) patchedScript.async = scriptNode.async;
+
+        patchedScript.src = URL.createObjectURL(
+          new Blob([code], { type: "application/javascript" }),
+        );
+        patchedScript.dataset.patched = "true";
+        document.head.appendChild(patchedScript);
+
+        if (
+          window.location.host === "web-dashers.github.io" &&
+          originalSrc.split("/").at(-1) === "phaser.min.js"
+        ) {
+          shouldShareScope = true;
+        }
+      }
+    }
 
     window._calciteMethodPatches.push(...methodPatches);
     window.postMessage({
