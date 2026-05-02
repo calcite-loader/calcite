@@ -213,115 +213,113 @@ declare global {
 window._calciteMethodPatches = window._calciteMethodPatches ?? [];
 window._calciteScriptPatches = window._calciteScriptPatches ?? [];
 
+let scriptQueue: Promise<void> = Promise.resolve();
+
 const interceptScript = async (scriptNode: HTMLScriptElement) => {
   const originalSrc = scriptNode.src;
-  const isModule = scriptNode.type === "module";
   if (!originalSrc.startsWith("http")) return; // Filter out other browser extensions
 
   scriptNode.type = "javascript/blocked";
   scriptNode.addEventListener("beforescriptexecute", (e) => e.preventDefault());
   scriptNode.remove();
 
-  await new Promise<void>((resolve) => onModsLoaded(resolve));
+  scriptQueue = scriptQueue.then(async () => {
+    await new Promise<void>((resolve) => onModsLoaded(resolve));
 
-  const response = await fetch(originalSrc);
-  let code = await response.text();
+    const response = await fetch(originalSrc);
+    let code = await response.text();
 
-  const deobfuscateMap = await getDeobfuscateMap(code);
-  if (originalSrc.split("/").at(-1) === "index-game.js") {
-    mainDeobfuscateMap = deobfuscateMap;
-  }
-
-  const methodPatches: PatchInfo[] = [];
-  const scriptPatches: PatchInfo[] = [];
-
-  for (const hook of methodHooks) {
-    const id = deobfuscateMap[hook.target];
-
-    const match = code.match(getMethodRegex(hook.target, id || -1));
-    if (!match || match.index == null) {
-      continue;
+    const deobfuscateMap = await getDeobfuscateMap(code);
+    if (originalSrc.split("/").at(-1) === "index-game.js") {
+      mainDeobfuscateMap = deobfuscateMap;
     }
 
-    const originalCode = extractMethodAt(code, match.index);
-    if (!originalCode) continue;
+    const methodPatches: PatchInfo[] = [];
+    const scriptPatches: PatchInfo[] = [];
 
-    const modifiedCode = hook.modifier(originalCode);
+    for (const hook of methodHooks) {
+      const id = deobfuscateMap[hook.target];
 
-    methodPatches.push({
-      target: hook.target,
-      mod: hook.mod,
-      before: originalCode,
-      after: modifiedCode,
-    });
+      const match = code.match(getMethodRegex(hook.target, id || -1));
+      if (!match || match.index == null) {
+        continue;
+      }
 
-    const firstBraceIndex = modifiedCode.indexOf("{");
-    if (firstBraceIndex === -1) continue;
+      const originalCode = extractMethodAt(code, match.index);
+      if (!originalCode) continue;
 
-    const codeBody = modifiedCode.slice(
-      firstBraceIndex + 1,
-      modifiedCode.lastIndexOf("}"),
-    );
+      const modifiedCode = hook.modifier(originalCode);
 
-    const signature = modifiedCode.slice(0, firstBraceIndex + 1);
+      methodPatches.push({
+        target: hook.target,
+        mod: hook.mod,
+        before: originalCode,
+        after: modifiedCode,
+      });
 
-    code = code.replace(
-      originalCode,
-      `${signature} try { ${codeBody} } catch (e) { window.dispatchEvent(new CustomEvent("calcite-patch-error", { detail: { script: "${
-        originalSrc.split("/").at(-1)
-      }", method: "${hook.target}", error: e } })) } }`,
-    );
-  }
+      const firstBraceIndex = modifiedCode.indexOf("{");
+      if (firstBraceIndex === -1) continue;
 
-  for (const hook of scriptHooks) {
-    if (originalSrc.split("/").at(-1) != hook.target) continue;
-    const originalCode = code;
-    code = hook.modifier(code);
+      const codeBody = modifiedCode.slice(
+        firstBraceIndex + 1,
+        modifiedCode.lastIndexOf("}"),
+      );
 
-    scriptPatches.push({
-      target: hook.target,
-      mod: hook.mod,
-      before: originalCode,
-      after: code,
-    });
-  }
+      const signature = modifiedCode.slice(0, firstBraceIndex + 1);
 
-  code =
-    `try { ${code} } catch (e) { window.dispatchEvent(new CustomEvent("calcite-patch-error", { detail: { script: "${
-      originalSrc.split("/").at(-1)
-    }", error: e } })) }`;
+      code = code.replace(
+        originalCode,
+        `${signature} try { ${codeBody} } catch (e) { window.dispatchEvent(new CustomEvent("calcite-patch-error", { detail: { script: "${
+          originalSrc.split("/").at(-1)
+        }", method: "${hook.target}", error: e } })) } }`,
+      );
+    }
 
-  const patchedScript = document.createElement("script");
+    for (const hook of scriptHooks) {
+      if (originalSrc.split("/").at(-1) != hook.target) continue;
+      const originalCode = code;
+      code = hook.modifier(code);
 
-  if (isModule && window.location.host === "web-dashers.github.io") {
-    patchedScript.type = "module";
+      scriptPatches.push({
+        target: hook.target,
+        mod: hook.mod,
+        before: originalCode,
+        after: code,
+      });
+    }
+
     code =
-      `const execute = () => { ${code} }; if (window.phaserLoaded) { execute() } else { window.addEventListener("phaser-loaded", execute) }`;
-  }
+      `try { ${code} } catch (e) { window.dispatchEvent(new CustomEvent("calcite-patch-error", { detail: { script: "${
+        originalSrc.split("/").at(-1)
+      }", error: e } })) }`;
 
-  code = `(function() {${code}})()`;
+    const patchedScript = document.createElement("script");
+    if (scriptNode.type === "module") patchedScript.type = "module";
 
-  patchedScript.textContent = code;
-  patchedScript.dataset.patched = "true";
-  document.documentElement.appendChild(patchedScript);
+    code = `(function() {${code}})()`;
 
-  window._calciteMethodPatches.push(...methodPatches);
-  window.postMessage({
-    type: "DEVTOOLS",
-    payload: {
-      type: "METHOD_PATCHES",
-      data: methodPatches,
-    },
-  }, "*");
+    patchedScript.textContent = code;
+    patchedScript.dataset.patched = "true";
+    document.documentElement.appendChild(patchedScript);
 
-  window._calciteScriptPatches.push(...scriptPatches);
-  window.postMessage({
-    type: "DEVTOOLS",
-    payload: {
-      type: "SCRIPT_PATCHES",
-      data: scriptPatches,
-    },
-  }, "*");
+    window._calciteMethodPatches.push(...methodPatches);
+    window.postMessage({
+      type: "DEVTOOLS",
+      payload: {
+        type: "METHOD_PATCHES",
+        data: methodPatches,
+      },
+    }, "*");
+
+    window._calciteScriptPatches.push(...scriptPatches);
+    window.postMessage({
+      type: "DEVTOOLS",
+      payload: {
+        type: "SCRIPT_PATCHES",
+        data: scriptPatches,
+      },
+    }, "*");
+  });
 };
 
 const ignoredErrors = new Set<string>();
