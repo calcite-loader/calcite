@@ -219,6 +219,7 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
   const originalSrc = scriptNode.src;
   if (!originalSrc.startsWith("http")) return; // Filter out other browser extensions
 
+  const originalType = scriptNode.type;
   scriptNode.type = "javascript/blocked";
   scriptNode.addEventListener("beforescriptexecute", (e) => e.preventDefault());
   scriptNode.remove();
@@ -240,7 +241,7 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
     for (const hook of methodHooks) {
       const id = deobfuscateMap[hook.target];
 
-      const match = code.match(getMethodRegex(hook.target, id || -1));
+      const match = code.match(getMethodRegex(hook.target, id ?? -1));
       if (!match || match.index == null) {
         continue;
       }
@@ -288,19 +289,25 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
       });
     }
 
-    code =
-      `try { ${code} } catch (e) { window.dispatchEvent(new CustomEvent("calcite-patch-error", { detail: { script: "${
-        originalSrc.split("/").at(-1)
-      }", error: e } })) }`;
-
     const patchedScript = document.createElement("script");
-    if (scriptNode.type === "module") patchedScript.type = "module";
+    if (originalType) patchedScript.type = originalType;
+    if (scriptNode.noModule) patchedScript.noModule = scriptNode.noModule;
+    if (scriptNode.defer) patchedScript.defer = scriptNode.defer;
+    if (scriptNode.async) patchedScript.async = scriptNode.async;
 
-    code = `(function() {${code}})()`;
+    // You may be wondering why this is needed, the answer is I have no fucking clue.
+    if (
+      window.location.host === "web-dashers.github.io" &&
+      originalSrc.split("/").at(-1) === "config.js"
+    ) {
+      code = code.replaceAll(/let|const/g, "var");
+    }
 
-    patchedScript.textContent = code;
+    patchedScript.src = URL.createObjectURL(
+      new Blob([code], { type: "application/javascript" }),
+    );
     patchedScript.dataset.patched = "true";
-    document.documentElement.appendChild(patchedScript);
+    document.head.appendChild(patchedScript);
 
     window._calciteMethodPatches.push(...methodPatches);
     window.postMessage({
@@ -344,10 +351,13 @@ export const initPatcher = () => {
 
   window.addEventListener("error", (e) => {
     if (e.filename !== "" && !e.error) return;
-    reportError(
-      `${e.message}, at ${e.lineno}:${e.colno}`,
-      [],
-      true,
+    window.dispatchEvent(
+      new CustomEvent("calcite-patch-error", {
+        detail: {
+          script: e.filename.split("/").at(-1),
+          error: e.error,
+        },
+      }),
     );
   });
 
