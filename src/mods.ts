@@ -347,17 +347,6 @@ export const executeMod = async (mod: ModData) => {
     },
   } as unknown as Api;
 
-  if (mod.type === "mod") {
-    try {
-      const runner = new Function("api", mod.code);
-      runner(api);
-    } catch (e) {
-      reportError(`Error while running ${mod.name} (${mod.id}): ${e}`, [mod]);
-    } finally {
-      return;
-    }
-  }
-
   window.gdApis[mod.id] = api;
 
   const blob = new Blob(
@@ -369,7 +358,8 @@ export const executeMod = async (mod: ModData) => {
   const url = URL.createObjectURL(blob);
 
   try {
-    return await import(url);
+    const result = await import(url);
+    if (mod.type === "library") return result;
   } catch (e) {
     reportError(`Error while running ${mod.name} (${mod.id}): ${e}`, [mod]);
   } finally {
