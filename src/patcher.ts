@@ -253,7 +253,22 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
       const originalCode = extractMethodAt(code, match.index);
       if (!originalCode) continue;
 
-      const modifiedCode = hook.modifier(originalCode);
+      let modifiedCode: string;
+      try {
+        modifiedCode = hook.modifier(originalCode);
+      } catch (e) {
+        window.dispatchEvent(
+          new CustomEvent("calcite-patch-error", {
+            detail: {
+              mod: hook.mod,
+              method: hook.target,
+              script: originalSrc.split("/").at(-1),
+              error: e,
+            },
+          }),
+        );
+        return;
+      }
 
       methodPatches.push({
         target: hook.target,
@@ -283,7 +298,19 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
     for (const hook of scriptHooks) {
       if (originalSrc.split("/").at(-1) != hook.target) continue;
       const originalCode = code;
-      code = hook.modifier(code);
+      try {
+        code = hook.modifier(code);
+      } catch (e) {
+        window.dispatchEvent(
+          new CustomEvent("calcite-patch-error", {
+            detail: {
+              mod: hook.mod,
+              script: hook.target,
+              error: e,
+            },
+          }),
+        );
+      }
 
       scriptPatches.push({
         target: hook.target,
@@ -387,6 +414,7 @@ export const initPatcher = () => {
     const data: {
       script: string;
       method?: string;
+      mod?: ModData;
       error: Error | string;
     } = e.detail;
 
@@ -406,7 +434,7 @@ export const initPatcher = () => {
         : ""
     }`;
 
-    if (data.method && patchedMethods[data.method]) {
+    if (data.method && patchedMethods[data.method] && !data.mod) {
       const possibleMods = new Set<ModData>();
 
       const mods = await getMods();
@@ -430,6 +458,11 @@ export const initPatcher = () => {
       );
       return;
     }
-    reportError(errorMessage, [], true, () => ignoredErrors.add(errorKey));
+    reportError(
+      errorMessage,
+      data.mod ? [data.mod] : [],
+      true,
+      () => ignoredErrors.add(errorKey),
+    );
   });
 };
