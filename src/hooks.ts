@@ -1,8 +1,13 @@
 import type { EventCallback } from "@calcite-loader/types";
+import type { ModData } from "./mods";
+import { reportError } from "./ui/error";
 
 type Callbacks = {
-  before: ((prevented: boolean, preventDefault: () => void) => void)[];
-  after: ((prevented: boolean) => void)[];
+  before: {
+    cb: (prevented: boolean, preventDefault: () => void) => void;
+    mod?: ModData;
+  }[];
+  after: { cb: (prevented: boolean) => void; mod?: ModData }[];
 };
 
 const callbacks = {
@@ -17,12 +22,12 @@ const callbacks = {
 };
 
 export const createEventCallback =
-  (name: keyof typeof callbacks): EventCallback =>
+  (name: keyof typeof callbacks, mod?: ModData): EventCallback =>
   (
     cb: (prevented: boolean, preventDefault: () => void) => void,
     when: "before" | "after" = "after",
   ) => {
-    callbacks[name][when].push(cb as any);
+    callbacks[name][when].push({ cb: cb as any, mod });
   };
 
 interface HookConfig {
@@ -34,14 +39,38 @@ interface HookConfig {
 const createHookWrapper = (
   { hookName, target, method }: HookConfig,
 ) => {
+  const ignoredErrors = new Set<string>();
+
+  const processError = (e: Error, mod?: ModData) => {
+    const errorKey = (mod?.id ?? "UNKNOWN") + "-" + e.message;
+    if (ignoredErrors.has(errorKey)) return;
+
+    const errorMessage = `${e.name}: ${e.message}${
+      ("lineNumber" in e && "columnNumber" in e)
+        ? ` at ${e.lineNumber}:${e.columnNumber}`
+        : ""
+    }`;
+
+    reportError(
+      errorMessage,
+      mod ? [mod] : [],
+      false,
+      () => ignoredErrors.add(errorKey),
+    );
+  };
+
   const original = target[method];
   return function (...callArgs: any[]) {
     let prevented = false;
 
     for (const cb of callbacks[hookName].before) {
-      cb(prevented, () => {
-        prevented = true;
-      });
+      try {
+        cb.cb(prevented, () => {
+          prevented = true;
+        });
+      } catch (e) {
+        processError(e as Error, cb.mod);
+      }
     }
 
     if (!prevented) {
@@ -49,7 +78,11 @@ const createHookWrapper = (
     }
 
     for (const cb of callbacks[hookName].after) {
-      cb(prevented);
+      try {
+        cb.cb(prevented);
+      } catch (e) {
+        processError(e as Error, cb.mod);
+      }
     }
   };
 };
