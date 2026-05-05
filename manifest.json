@@ -28,7 +28,7 @@
     {
       "resources": ["assets/*"],
       "matches": [
-        "https://geometrydash.com/*",
+        "https://*.geometrydash.com/*",
         "https://web-dashers.github.io/*"
       ]
     }
@@ -36,7 +36,7 @@
   "content_scripts": [
     {
       "matches": [
-        "https://geometrydash.com/game/index.html",
+        "https://*.geometrydash.com/game/index.html",
         "https://web-dashers.github.io/*"
       ],
       "js": ["bridge.js"],
