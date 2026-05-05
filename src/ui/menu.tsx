@@ -27,17 +27,30 @@ const ModItem = (props: {
   const [showSettings, setShowSettings] = useState(false);
 
   let forceDisable = false;
-  for (const mod of props.mods) {
-    if (!mod.enabled) continue;
-    if (
-      mod.conflicts.includes(props.mod.id) ||
-      props.mod.conflicts.includes(mod.id)
-    ) forceDisable = true;
+  let disableReason: string | undefined;
+
+  if (!props.mod.compatibleHosts.includes(window.location.host)) {
+    forceDisable = true;
+    disableReason = "Incompatible Host";
+  }
+
+  if (!forceDisable) {
+    for (const mod of props.mods) {
+      if (!mod.enabled) continue;
+      if (
+        mod.conflicts.includes(props.mod.id) ||
+        props.mod.conflicts.includes(mod.id)
+      ) {
+        forceDisable = true;
+        disableReason = "Mod Conflict: " + mod.name;
+        break;
+      }
+    }
   }
 
   return (
     <div>
-      <label>
+      <label title={disableReason}>
         <input
           type="checkbox"
           checked={props.mod.enabled && !forceDisable}

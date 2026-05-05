@@ -25,6 +25,7 @@ export interface ModData {
   enabled: boolean;
   settings: Record<string, number | string | boolean>;
   hotkeys: Record<string, string[]>;
+  compatibleHosts: string[];
 }
 
 export const modSettingsMap: Record<string, Record<string, ModSetting>> = {};
@@ -64,6 +65,22 @@ export const parseMod = async (
   const fields = parseHeaderFields(code);
   const id = fields.id ?? fileName.split(".").slice(0, -1).join(".");
 
+  let compatibleHosts = ["geometrydash.com", "www.geometrydash.com"];
+  if (fields.compatibleHosts) {
+    compatibleHosts = fields.compatibleHosts.split(",").map((host) =>
+      host.trim()
+    );
+
+    if (
+      compatibleHosts.includes("geometrydash.com") &&
+      !compatibleHosts.includes("www.geometrydash.com")
+    ) compatibleHosts.push("www.geometrydash.com");
+    else if (
+      !compatibleHosts.includes("geometrydash.com") &&
+      compatibleHosts.includes("www.geometrydash.com")
+    ) compatibleHosts.push("geometrydash.com");
+  }
+
   let deps: Dependency[] = [];
   if (fields.deps) {
     deps = parseDeps(fields.deps);
@@ -82,6 +99,9 @@ export const parseMod = async (
       if (mod == null) continue;
 
       if (mod.needsRefresh) fields.needsRefresh = "true"; // force mods whose dependencies need refreshes to propogate that.
+      for (const host of mod.compatibleHosts) {
+        if (!compatibleHosts.includes(host)) compatibleHosts.push(host);
+      }
     }
   }
 
@@ -89,13 +109,13 @@ export const parseMod = async (
   let enabled = true;
   if (fields.conflicts) {
     conflicts = fields.conflicts.split(",").map((conflict) => conflict.trim());
+  }
 
-    const mods = await getMods();
-    for (const mod of mods) {
-      if (!mod.enabled) continue;
-      if (conflicts.includes(mod.id) || mod.conflicts.includes(id)) {
-        enabled = false;
-      }
+  const mods = await getMods();
+  for (const mod of mods) {
+    if (!mod.enabled) continue;
+    if (conflicts.includes(mod.id) || mod.conflicts.includes(id)) {
+      enabled = false;
     }
   }
 
@@ -110,6 +130,7 @@ export const parseMod = async (
     enabled,
     settings: {},
     hotkeys: {},
+    compatibleHosts,
   };
 };
 
@@ -248,6 +269,8 @@ export const executeMod = async (mod: ModData) => {
   if (mod.type === "library" && loadedLibs[mod.id]) {
     return loadedLibs[mod.id];
   } else if (loadedMods.includes(mod.id)) return;
+
+  if (!mod.compatibleHosts.includes(window.location.host)) return;
 
   console.log("Injecting Mod: " + mod.name);
 
