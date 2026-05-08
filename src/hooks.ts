@@ -130,9 +130,9 @@ export const registerHooks = () => {
     method: "exitShipMode",
   });
 
-  window.gdScene.update = createHookWrapper({
+  window.gdScene._player.syncSprites = createHookWrapper({
     hookName: "update",
-    target: window.gdScene,
-    method: "update",
+    target: window.gdScene._player,
+    method: "syncSprites",
   });
 };
