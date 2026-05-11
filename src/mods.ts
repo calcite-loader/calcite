@@ -23,7 +23,7 @@ export interface ModData {
   name: string;
   needsRefresh: boolean;
   enabled: boolean;
-  settings: Record<string, number | string | boolean>;
+  settings: Record<string, number | string | boolean | ArrayBuffer>;
   hotkeys: Record<string, string[]>;
   compatibleHosts: string[];
 }
@@ -201,7 +201,7 @@ export const disableMod = (mod: ModData): Promise<void> => {
 
 export const setSetting = (
   id: string,
-  value: string | boolean | number,
+  value: string | boolean | number | ArrayBuffer,
   mod: ModData,
 ): Promise<void> => {
   return new Promise((resolve) => {

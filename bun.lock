@@ -9,7 +9,7 @@
         "preact": "^10.29.1",
       },
       "devDependencies": {
-        "@calcite-loader/types": "^0.12.1",
+        "@calcite-loader/types": "^0.15.0",
         "@types/archiver": "^7.0.0",
         "@types/bun": "^1.3.11",
         "@types/chrome": "^0.1.39",
@@ -25,7 +25,7 @@
     },
   },
   "packages": {
-    "@calcite-loader/types": ["@calcite-loader/types@0.12.1", "", { "dependencies": { "@types/pako": "^2.0.4" }, "peerDependencies": { "phaser": "~3.90.0" } }, "sha512-k8FdJvGVOLEqB3UGpWJaA1ceNnBlLsSmtbZsrFZ36Hqz4/EPPIUPtzsRtnMzxEVrz1wwzkE5u9pGYGeGGiNQeA=="],
+    "@calcite-loader/types": ["@calcite-loader/types@0.15.0", "", { "dependencies": { "@types/pako": "^2.0.4" }, "peerDependencies": { "phaser": "~3.90.0" } }, "sha512-mmDyt21Zzas50aWKtyxk9cCm9wwj2jqyiEDYmz7X0a4tc9SrqN+c1OwK4KBM2msgwL/2YDKNdlwUzmIZRwXmRA=="],
 
     "@emnapi/runtime": ["@emnapi/runtime@1.9.2", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-3U4+MIWHImeyu1wnmVygh5WlgfYDtyf0k8AbLhMFxOipihf6nrWC4syIm/SwEeec0mNSafiiNnMJwbza/Is6Lw=="],
 

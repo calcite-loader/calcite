@@ -6,6 +6,60 @@ import type { Hotkey, ModSetting } from "@calcite-loader/types";
 
 let openMenuInternal: () => void;
 
+const Dropdown = ({
+  value,
+  options,
+  onChange,
+}: {
+  value: string;
+  options: Record<string, string>;
+  onChange: (value: string) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (!containerRef.current?.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    if (open) {
+      window.addEventListener("click", handleClickOutside);
+    }
+
+    return () => window.removeEventListener("click", handleClickOutside);
+  }, [open]);
+
+  return (
+    <div ref={containerRef} className="dropdown-container">
+      <button
+        className="dropdown-button"
+        onClick={() => setOpen(!open)}
+      >
+        {options[value] || value}
+      </button>
+      {open && (
+        <div className="dropdown-menu">
+          {Object.entries(options).map(([optionValue, optionLabel]) => (
+            <div
+              key={optionValue}
+              className="dropdown-option"
+              onClick={() => {
+                onChange(optionValue);
+                setOpen(false);
+              }}
+            >
+              {optionLabel}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const SettingInput = ({
   setting,
   settingId,
@@ -18,8 +72,11 @@ const SettingInput = ({
   const [value, setValue] = useState(
     mod.settings[settingId] ?? setting.default,
   );
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleChange = async (newValue: string | number | boolean) => {
+  const handleChange = async (
+    newValue: string | number | boolean | ArrayBuffer,
+  ) => {
     setValue(newValue);
     mod.settings[settingId] = newValue;
     await setSetting(settingId, newValue, mod);
@@ -77,6 +134,49 @@ const SettingInput = ({
         />
         <span className="toggle-switch" />
       </label>
+    );
+  }
+
+  if (setting.type === "file") {
+    const handleFileUpload = (e: Event) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          handleChange(reader.result as ArrayBuffer);
+        };
+        reader.readAsArrayBuffer(file);
+      }
+      (e.target as HTMLInputElement).value = "";
+    };
+
+    return (
+      <div className="file-input-container">
+        <input
+          type="file"
+          ref={fileInputRef}
+          hidden={true}
+          onChange={handleFileUpload}
+        />
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="file-button"
+        >
+          {value instanceof ArrayBuffer || value
+            ? "Change File"
+            : "Select File"}
+        </button>
+      </div>
+    );
+  }
+
+  if (setting.type === "select") {
+    return (
+      <Dropdown
+        value={String(value)}
+        options={setting.options}
+        onChange={(newValue) => handleChange(newValue)}
+      />
     );
   }
 

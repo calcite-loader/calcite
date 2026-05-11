@@ -1,5 +1,26 @@
 const api = typeof browser !== "undefined" ? browser : chrome;
 
+const serializeArrayBuffer = (value: any) => {
+  if (value instanceof ArrayBuffer) {
+    return {
+      __arrayBuffer: btoa(String.fromCharCode(...new Uint8Array(value))),
+    };
+  }
+  return value;
+};
+
+const deserializeArrayBuffer = (value: any) => {
+  if (value && typeof value === "object" && "__arrayBuffer" in value) {
+    const binaryString = atob(value.__arrayBuffer);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
+  }
+  return value;
+};
+
 window.addEventListener("message", async (e) => {
   if (e.source != window) return;
 
@@ -9,6 +30,9 @@ window.addEventListener("message", async (e) => {
     if (e.data.mod.id in mods) {
       modToSave.settings = mods[e.data.mod.id].settings;
     }
+    for (const [key, value] of Object.entries(modToSave.settings)) {
+      modToSave.settings[key] = serializeArrayBuffer(value);
+    }
     mods[e.data.mod.id] = modToSave;
     await api.storage.local.set({ mods });
     window.postMessage({ type: "SAVE_MOD_SUCCESS", id: e.data.mod.id }, "*");
@@ -17,9 +41,15 @@ window.addEventListener("message", async (e) => {
 
   if (e.data.type == "FETCH_MODS") {
     const data = await api.storage.local.get("mods");
+    const mods = Object.values(data.mods || {});
+    for (const mod of mods) {
+      for (const [key, value] of Object.entries(mod.settings || {})) {
+        mod.settings[key] = deserializeArrayBuffer(value);
+      }
+    }
     window.postMessage({
       type: "RECEIVE_MODS",
-      mods: Object.values(data.mods || {}),
+      mods,
     }, "*");
     return;
   }
@@ -50,7 +80,7 @@ window.addEventListener("message", async (e) => {
 
   if (e.data.type == "SET_SETTING") {
     const mods = (await api.storage.local.get("mods")).mods || {};
-    mods[e.data.modId].settings[e.data.id] = e.data.value;
+    mods[e.data.modId].settings[e.data.id] = serializeArrayBuffer(e.data.value);
     await api.storage.local.set({ mods });
     window.postMessage({
       type: "SET_SETTING_SUCCESS",
