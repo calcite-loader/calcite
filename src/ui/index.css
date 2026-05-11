@@ -1,6 +1,7 @@
 .calcite-container {
   --accent: #ff813e;
   --menu-background: #334499;
+  --menu-background-dark: #112277;
   --menu-highlight: #5655ff;
   --menu-shadow: #111155;
 }

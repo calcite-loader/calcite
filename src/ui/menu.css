@@ -18,7 +18,7 @@
         align-items: center;
       }
 
-      input[type="checkbox"] {
+      input[type="checkbox"]:not(.setting-toggle) {
         appearance: none;
         margin: 0;
 
