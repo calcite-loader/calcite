@@ -64,10 +64,12 @@ const SettingInput = ({
   setting,
   settingId,
   mod,
+  onSettingChange,
 }: {
   setting: ModSetting;
   settingId: string;
   mod: ModData;
+  onSettingChange?: () => void;
 }) => {
   const [value, setValue] = useState(
     mod.settings[settingId] ?? setting.default,
@@ -81,6 +83,7 @@ const SettingInput = ({
     mod.settings[settingId] = newValue;
     await setSetting(settingId, newValue, mod);
     setting.onChange?.(newValue as never);
+    onSettingChange?.();
   };
 
   if (setting.type === "string" || setting.type === "color") {
@@ -187,6 +190,7 @@ export const Settings = (
   props: { open: boolean; onClose: () => void; mod: ModData },
 ) => {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const [, setSettingsVersion] = useState(0);
 
   useEffect(() => {
     openMenuInternal = () => {
@@ -210,6 +214,10 @@ export const Settings = (
 
   const settings = modSettingsMap[props.mod.id] ?? {};
   const hotkeys = modHotkeysMap[props.mod.id] ?? {};
+
+  const notifySettingsChange = () => {
+    setSettingsVersion((v) => v + 1);
+  };
 
   const HotkeyRow = ({
     id,
@@ -307,16 +315,30 @@ export const Settings = (
       </header>
       {Object.entries(settings).length > 0 && (
         <ul>
-          {Object.entries(settings).map(([id, setting]) => (
-            <li key={id}>
-              <label>{setting.name}</label>
-              <SettingInput
-                setting={setting}
-                settingId={id}
-                mod={props.mod}
-              />
-            </li>
-          ))}
+          {Object.entries(settings).map(([id, setting]) => {
+            const shouldShow = (setting.condition ?? (() => true))(
+              Object.fromEntries(
+                Object.entries(settings).map(([settingId, s]) => [
+                  settingId,
+                  props.mod.settings[settingId] ?? s.default,
+                ]),
+              ),
+            );
+
+            if (!shouldShow) return null;
+
+            return (
+              <li key={id}>
+                <label>{setting.name}</label>
+                <SettingInput
+                  setting={setting}
+                  settingId={id}
+                  mod={props.mod}
+                  onSettingChange={notifySettingsChange}
+                />
+              </li>
+            );
+          })}
         </ul>
       )}
 
