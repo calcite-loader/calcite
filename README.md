@@ -36,7 +36,7 @@ contents of the mod.
 - [x] Broaden patcher method matching
 - [x] Source mod compatibility
 - [ ] Mod dev auto reload
-- [ ] `file` setting type
+- [x] `file` setting type
 - [x] Hotkeys API
 
 ---
