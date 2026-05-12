@@ -242,20 +242,39 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
     const methodPatches: PatchInfo[] = [];
     const scriptPatches: PatchInfo[] = [];
 
+    const patchedMethods: Record<
+      string,
+      { original: string; modified: string }
+    > = {};
     for (const hook of methodHooks) {
-      const id = deobfuscateMap[hook.target];
+      let targetCode: string | null;
 
-      const match = code.match(getMethodRegex(hook.target, id ?? -1));
-      if (!match || match.index == null) {
-        continue;
+      if (hook.target in patchedMethods) {
+        targetCode = patchedMethods[hook.target]!.modified;
+      } else {
+        const id = deobfuscateMap[hook.target];
+
+        const match = code.match(getMethodRegex(hook.target, id ?? -1));
+        if (!match || match.index == null) {
+          continue;
+        }
+
+        const originalCode = extractMethodAt(code, match.index);
+        targetCode = originalCode;
+
+        if (originalCode) {
+          patchedMethods[hook.target] = {
+            original: originalCode,
+            modified: originalCode,
+          };
+        }
       }
 
-      const originalCode = extractMethodAt(code, match.index);
-      if (!originalCode) continue;
+      if (!targetCode) continue;
 
       let modifiedCode: string;
       try {
-        modifiedCode = hook.modifier(originalCode);
+        modifiedCode = hook.modifier(targetCode);
       } catch (e) {
         window.dispatchEvent(
           new CustomEvent("calcite-patch-error", {
@@ -273,25 +292,29 @@ const interceptScript = async (scriptNode: HTMLScriptElement) => {
       methodPatches.push({
         target: hook.target,
         mod: hook.mod,
-        before: originalCode,
+        before: targetCode,
         after: modifiedCode,
       });
 
-      const firstBraceIndex = modifiedCode.indexOf("{");
+      patchedMethods[hook.target]!.modified = modifiedCode;
+    }
+
+    for (const [method, methodCode] of Object.entries(patchedMethods)) {
+      const firstBraceIndex = methodCode.modified.indexOf("{");
       if (firstBraceIndex === -1) continue;
 
-      const codeBody = modifiedCode.slice(
+      const codeBody = methodCode.modified.slice(
         firstBraceIndex + 1,
-        modifiedCode.lastIndexOf("}"),
+        methodCode.modified.lastIndexOf("}"),
       );
 
-      const signature = modifiedCode.slice(0, firstBraceIndex + 1);
+      const signature = methodCode.modified.slice(0, firstBraceIndex + 1);
 
       code = code.replace(
-        originalCode,
+        methodCode.original,
         `${signature} try { ${codeBody} } catch (e) { window.dispatchEvent(new CustomEvent("calcite-patch-error", { detail: { script: "${
           originalSrc.split("/").at(-1)
-        }", method: "${hook.target}", error: e } })) } }`,
+        }", method: "${method}", error: e } })) } }`,
       );
     }
 
