@@ -114,4 +114,22 @@ window.addEventListener("message", async (e) => {
   if (e.data.type == "DEVTOOLS") {
     (api.runtime.sendMessage as (message: any) => void)(e.data.payload);
   }
+
+  if (e.data.type == "FETCH") {
+    const handler = (message: any) => {
+      if (
+        message.type === "FETCH" && message.payload.id === e.data.payload.id
+      ) {
+        window.postMessage({
+          type: "RECEIVE_FETCH",
+          response: message.payload.response,
+          id: message.payload.id,
+        });
+      }
+      api.runtime.onMessage.removeListener(handler);
+    };
+    api.runtime.onMessage.addListener(handler);
+
+    (api.runtime.sendMessage as (message: any) => void)(e.data.payload);
+  }
 });

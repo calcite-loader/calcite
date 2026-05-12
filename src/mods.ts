@@ -368,6 +368,30 @@ export const executeMod = async (mod: ModData) => {
     sendMessage: (target: string, data?: string) => {
       receiveMessageCallbacks[target]?.(mod.id, data);
     },
+    privilegedFetch: (
+      input: RequestInfo | URL,
+      init?: RequestInit,
+    ): Promise<Uint8Array> => {
+      return new Promise((resolve) => {
+        const id = Math.random();
+
+        const handler = (e: MessageEvent) => {
+          if (e.data.type === "RECEIVE_FETCH" && id === e.data.id) {
+            window.removeEventListener("message", handler);
+            resolve(new Uint8Array(e.data.response));
+          }
+        };
+        window.addEventListener("message", handler);
+        window.postMessage({
+          type: "FETCH",
+          payload: {
+            id,
+            input,
+            init,
+          },
+        }, "*");
+      });
+    },
   } as unknown as Api;
 
   window.gdApis[mod.id] = api;

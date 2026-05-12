@@ -23,6 +23,7 @@
       "32": "assets/icon32.png"
     }
   },
+  "host_permissions": ["https://www.boomlings.com/*"],
   "permissions": ["storage"],
   "web_accessible_resources": [
     {
