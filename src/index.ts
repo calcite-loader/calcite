@@ -14,6 +14,9 @@ initErrorDialog();
 
 const executeHook = () => {
   loadMods();
+  if (document.readyState === "loading") {
+    window.addEventListener("DOMContentLoaded", initMenu);
+  } else initMenu();
 
   let _phaser: typeof Phaser | undefined = undefined;
 
@@ -65,7 +68,6 @@ const executeHook = () => {
                           setTimeout(() => {
                             initHotkeys();
                             hasLoaded();
-                            initMenu();
                             injectMenuButton();
                             modInitCallbacks.forEach((cb) => cb());
 
